@@ -16,6 +16,7 @@ import twitter4j.URLEntity;
 import twitter4j.UserMentionEntity;
 
 public class StatusUtil {
+    private static final Pattern TWITTER_PATTERN = Pattern.compile("(\\n)?https?://twitter\\.com/[\\w\\.\\-/:#\\?=&;%~\\+]+");
     private static final Pattern TWITPIC_PATTERN = Pattern.compile("^http://twitpic\\.com/(\\w+)$");
     private static final Pattern TWIPPLE_PATTERN = Pattern.compile("^http://p\\.twipple\\.jp/(\\w+)$");
     private static final Pattern INSTAGRAM_PATTERN = Pattern.compile("^https?://(?:www\\.)?instagram\\.com/p/([^/]+)/$");
@@ -84,6 +85,9 @@ public class StatusUtil {
             Matcher m = p.matcher(text);
             text = m.replaceAll(media.getExpandedURL());
         }
+
+        Matcher m = TWITTER_PATTERN.matcher(text);
+        text = m.replaceAll("");
         return text;
     }
 

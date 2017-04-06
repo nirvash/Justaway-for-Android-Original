@@ -86,6 +86,7 @@ android {
     dexOptions {
         incremental true
     }
+    buildToolsVersion '25.0.0'
 }
 
 if (project.hasProperty('storeFile')) {

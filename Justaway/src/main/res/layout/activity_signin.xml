@@ -25,4 +25,18 @@
         android:textSize="18sp"
         android:text="@string/label_connect_with_twitter"/>
 
+    <EditText
+        android:id="@+id/edit_pin_code"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/button_login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/edit_pin_code"
+        android:text="ログイン" />
+
 </LinearLayout>

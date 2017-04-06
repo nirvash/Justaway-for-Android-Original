@@ -94,8 +94,9 @@ public class ImageUtil {
                 image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 LinearLayout.LayoutParams layoutParams =
                         new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 240);
+                layoutParams.weight = 1.0f;
                 if (index > 0) {
-                    layoutParams.setMargins(0, 20, 0, 0);
+                    layoutParams.setMargins(20, 0, 0, 0);
                 }
                 // layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
                 viewGroup.addView(image, layoutParams);

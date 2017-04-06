@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import butterknife.ButterKnife;
@@ -23,13 +25,15 @@ import twitter4j.User;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-public class SignInActivity extends Activity {
+public class SignInActivity extends Activity implements View.OnClickListener {
 
     private static final String STATE_REQUEST_TOKEN = "request_token";
     private RequestToken mRequestToken;
 
     @Bind(R.id.start_oauth_button) FontelloButton mStartOauthButton;
     @Bind(R.id.connect_with_twitter) TextView mConnectWithTwitter;
+    @Bind(R.id.edit_pin_code) EditText mPinCode;
+    @Bind(R.id.button_login) Button mLoginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +66,8 @@ public class SignInActivity extends Activity {
                 }
             }
         }
+
+        mLoginButton.setOnClickListener(this);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -117,6 +123,25 @@ public class SignInActivity extends Activity {
         finish();
     }
 
+    @Override
+    public void onClick(View v) {
+        switch(v.getId()) {
+            case R.id.button_login:
+            {
+                // Get Pin Code
+                final String oauth_verifier = mPinCode.getText().toString();
+
+                if (oauth_verifier == null || oauth_verifier.isEmpty()) {
+                    return;
+                }
+                MessageUtil.showProgressDialog(this, getString(R.string.progress_process));
+                new VerifyOAuthTask().execute(oauth_verifier);
+
+
+            }
+        }
+    }
+
     private class VerifyOAuthTask extends AsyncTask<String, Void, User> {
         @Override
         protected User doInBackground(String... params) {
@@ -152,7 +177,7 @@ public class SignInActivity extends Activity {
             protected RequestToken doInBackground(Void... params) {
                 try {
                     Twitter twitter = TwitterManager.getTwitterInstance();
-                    return twitter.getOAuthRequestToken(getString(R.string.twitter_callback_url));
+                    return twitter.getOAuthRequestToken(); //getString(R.string.twitter_callback_url));
                 } catch (TwitterException e) {
                     e.printStackTrace();
                     return null;
