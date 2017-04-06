@@ -59,6 +59,7 @@
     <string name="context_menu_show_retweeters">RTした人を表示</string>
     <string name="context_menu_talk">会話を表示</string>
     <string name="context_menu_title_photo_method">画像選択メニュー</string>
+    <string name="context_menu_copy">本文をコピー</string>
     <string name="description_icon">Profile Icon</string>
     <string name="dialog_title_draft">下書き</string>
     <string name="dialog_title_hashtag">ハッシュタグ</string>

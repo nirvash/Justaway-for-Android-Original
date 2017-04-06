@@ -4,6 +4,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.UnderlineSpan;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +31,8 @@ public class StatusUtil {
     private static final Pattern URL_PATTERN = Pattern.compile("(http://|https://)[\\w\\.\\-/:#\\?=&;%~\\+]+");
     private static final Pattern MENTION_PATTERN = Pattern.compile("@[a-zA-Z0-9_]+");
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#\\S+");
+
+    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("[0-9a-fA-F]{8}");
 
     /**
      * source(via)からクライアント名を抜き出す
@@ -198,5 +201,16 @@ public class StatusUtil {
         }
 
         return sb;
+    }
+
+    public static String getGranbluefantasyId(String text) {
+        String textFiltered = Normalizer.normalize(text, Normalizer.Form.NFKC);
+        textFiltered = textFiltered.toLowerCase();
+
+        Matcher m = GRANBLUE_FANTASY_ID_PATTERN.matcher(textFiltered);
+        if (m.find()) {
+            text = m.group();
+        }
+        return text;
     }
 }

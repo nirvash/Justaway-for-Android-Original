@@ -3,6 +3,8 @@ package info.justaway.fragment.dialog;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -166,6 +168,35 @@ public class StatusMenuFragment extends DialogFragment {
         boolean isPublic = !source.getUser().isProtected();
 
         builder.setTitle(status.getText());
+
+        /**
+         * 参戦IDをコピー
+         */
+        adapter.add(new Menu(R.string.context_menu_copy_id, new Runnable() {
+            @Override
+            public void run() {
+                ClipboardManager cm = (ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                String text = StatusUtil.getGranbluefantasyId(source.getText());
+                cm.setPrimaryClip(ClipData.newPlainText("label", text));
+                MessageUtil.showToast(R.string.copy_success);
+                dismiss();
+            }
+        }));
+
+        /**
+         * 本文をコピー
+         */
+        adapter.add(new Menu(R.string.context_menu_copy, new Runnable() {
+            @Override
+            public void run() {
+                ClipboardManager cm = (ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                String text = source.getText();
+                cm.setPrimaryClip(ClipData.newPlainText("label", text));
+                MessageUtil.showToast(R.string.copy_success);
+                dismiss();
+            }
+        }));
+
 
         /**
          * リプ
@@ -485,6 +516,8 @@ public class StatusMenuFragment extends DialogFragment {
                     }));
                 }
             }
+
+
 
             /**
              * ツイートを共有
