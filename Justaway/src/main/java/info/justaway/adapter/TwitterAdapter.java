@@ -113,6 +113,10 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         if (exists(row)) {
             return;
         }
+        if (filterRetweet(row)) {
+            return;
+        }
+
         super.add(row);
         if (row.isStatus()) {
             mIdMap.put(row.getStatus().getId(), true);
@@ -129,6 +133,10 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         if (exists(row)) {
             return;
         }
+        if (filterRetweet(row)) {
+            return;
+        }
+
         super.add(row);
         if (row.isStatus()) {
             mIdMap.put(row.getStatus().getId(), true);
@@ -143,6 +151,9 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             return;
         }
         if (exists(row)) {
+            return;
+        }
+        if (filterRetweet(row)) {
             return;
         }
         super.insert(row, index);
@@ -163,6 +174,60 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
     public boolean exists(Row row) {
         return row.isStatus() && mIdMap.get(row.getStatus().getId(), false);
+    }
+
+    public boolean filterRetweet(Row row) {
+        if (row.isStatus()) {
+            try {
+                Status status = row.getStatus();
+                if (status != null && status.isRetweet()) {
+                    Status retweet = status.getRetweetedStatus();
+                    if (retweet != null) {
+                        for (int i = 0; i < getCount(); i++) {
+                            Row item = getItem(i);
+                            if (item.isStatus() && item.getStatus().isRetweet()) {
+                                Status status2 = item.getStatus();
+                                Status retweet2 = status2.getRetweetedStatus();
+                                if (retweet.getId() == retweet2.getId()) {
+                                    if (status.getCreatedAt().before(status2.getCreatedAt())) {
+                                        return true;
+                                    } else {
+                                        remove(item);
+                                        return false;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public boolean retweetExists(Row row) {
+        if (row.isStatus()) {
+            Status status = row.getStatus();
+            if (status != null && status.isRetweet()) {
+                Status retweet = status.getRetweetedStatus();
+                if (retweet != null) {
+                    for (int i=0; i<getCount(); i++) {
+                        Row item = getItem(i);
+                        if (item.isStatus() && item.getStatus().isRetweet()) {
+                            Status retweet2 = item.getStatus().getRetweetedStatus();
+                            if (retweet.getId() == retweet2.getId()) {
+                                return true;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void filter(Row row) {
