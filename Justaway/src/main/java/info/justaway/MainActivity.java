@@ -220,6 +220,7 @@ public class MainActivity extends FragmentActivity {
         mDrawerList.setAdapter(mAccessTokenAdapter);
         mDrawerToggle = getActionBarDrawerToggle();
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
 
         // タブとかの初期化処理へ続く..
         setup();
