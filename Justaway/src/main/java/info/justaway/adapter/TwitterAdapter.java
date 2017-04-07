@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.LongSparseArray;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -40,6 +41,7 @@ import info.justaway.settings.MuteSettings;
 import info.justaway.util.ActionUtil;
 import info.justaway.util.ImageUtil;
 import info.justaway.util.MessageUtil;
+import info.justaway.util.MutableLinkMovementMethod;
 import info.justaway.util.StatusUtil;
 import info.justaway.util.ThemeUtil;
 import info.justaway.util.TimeUtil;
@@ -591,7 +593,8 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
         // RTの場合はRT元
         String statusString = StatusUtil.getExpandedText(status);
-        holder.mStatus.setText(StatusUtil.generateUnderline(statusString));
+        holder.mStatus.setText(StatusUtil.generateUnderline(statusString, getContext()));
+        holder.mStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
 
         // 引用ツイート
         Status quotedStatus = status.getQuotedStatus();
@@ -599,6 +602,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             holder.mQuotedDisplayName.setText(quotedStatus.getUser().getName());
             holder.mQuotedScreenName.setText(quotedStatus.getUser().getScreenName());
             holder.mQuotedStatus.setText(quotedStatus.getText());
+            holder.mQuotedStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
 
             // プレビュー表示On
             if (BasicSettings.getDisplayThumbnailOn()) {

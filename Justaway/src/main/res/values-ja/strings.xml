@@ -254,5 +254,6 @@
     <string name="pref_description_talk_order_newest">会話を表示時、新しいツイートを上に表示</string>
     <string name="button_fav_and_retweet">Fav &amp; RT</string>
     <string name="context_menu_copy_id">参戦IDをコピー</string>
+    <string name="copy_id_success">コピーしました [%s]</string>
 
 </resources>

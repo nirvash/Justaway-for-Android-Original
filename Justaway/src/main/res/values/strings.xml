@@ -257,4 +257,5 @@
     <string name="copy_success">Copy Success</string>
     <string name="context_menu_copy_id">Copy ID</string>
     <string name="button_fav_and_retweet">Fav &amp; RT</string>
+    <string name="copy_id_success">Copy Success [%s]</string>
 </resources>

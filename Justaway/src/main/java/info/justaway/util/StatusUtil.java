@@ -1,14 +1,22 @@
 package info.justaway.util;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
+import android.view.View;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import info.justaway.R;
 import info.justaway.model.AccessTokenManager;
 import twitter4j.ExtendedMediaEntity;
 import twitter4j.MediaEntity;
@@ -32,7 +40,8 @@ public class StatusUtil {
     private static final Pattern MENTION_PATTERN = Pattern.compile("@[a-zA-Z0-9_]+");
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#\\S+");
 
-    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("[0-9a-fA-F]{8}");
+    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-fA-F])[0-9a-fA-F]{8}(?![0-9a-fA-F])");
+//    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])[0-9a-fA-F０-９Ａ-Ｆａ-ｆ]{8}(?![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])");
 
     /**
      * source(via)からクライアント名を抜き出す
@@ -175,7 +184,7 @@ public class StatusUtil {
         return "";
     }
 
-    public static SpannableStringBuilder generateUnderline(String str) {
+    public static SpannableStringBuilder generateUnderline(String str, final Context context) {
         // URL、メンション、ハッシュタグ が含まれていたら下線を付ける
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(str);
@@ -187,7 +196,35 @@ public class StatusUtil {
             sb.setSpan(us, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
+        String tmpStr = Normalizer.normalize(str, Normalizer.Form.NFKC).toUpperCase();
+        final Matcher idMatcher = GRANBLUE_FANTASY_ID_PATTERN.matcher(tmpStr);
+        while (idMatcher.find()) {
+            final String id = idMatcher.group();
+            ClickableSpan cs = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    ClipboardManager cm = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    cm.setPrimaryClip(ClipData.newPlainText("label", id));
+                    String message = String.format(context.getString(R.string.copy_id_success), id);
+                    MessageUtil.showToast(message);
 
+                    PackageManager pm = context.getPackageManager();
+                    Intent intent = pm.getLaunchIntentForPackage("jp.mbga.a12016007.lite");
+                    try {
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                    }
+                }
+            };
+
+            sb.setSpan(cs, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+/*
+            us = new UnderlineSpan();
+            sb.setSpan(us, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+*/
+        }
+
+/*
         Matcher mentionMatcher = MENTION_PATTERN.matcher(str);
         while (mentionMatcher.find()) {
             us = new UnderlineSpan();
@@ -199,7 +236,7 @@ public class StatusUtil {
             us = new UnderlineSpan();
             sb.setSpan(us, hashtagMatcher.start(), hashtagMatcher.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
-
+*/
         return sb;
     }
 

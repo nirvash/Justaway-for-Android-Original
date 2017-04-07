@@ -176,9 +176,20 @@ public class StatusMenuFragment extends DialogFragment {
             @Override
             public void run() {
                 ClipboardManager cm = (ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                String text = StatusUtil.getGranbluefantasyId(source.getText());
-                cm.setPrimaryClip(ClipData.newPlainText("label", text));
-                MessageUtil.showToast(R.string.copy_success);
+                String id = StatusUtil.getGranbluefantasyId(source.getText());
+                cm.setPrimaryClip(ClipData.newPlainText("label", id));
+
+                String message = String.format(getContext().getString(R.string.copy_id_success), id);
+                MessageUtil.showToast(message);
+
+
+                PackageManager pm = getContext().getPackageManager();
+                Intent intent = pm.getLaunchIntentForPackage("jp.mbga.a12016007.lite");
+                try {
+                    getContext().startActivity(intent);
+                } catch (Exception e) {
+                }
+
                 dismiss();
             }
         }));
