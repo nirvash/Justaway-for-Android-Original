@@ -100,6 +100,7 @@ public class ProfileActivity extends FragmentActivity implements
         }
         MessageUtil.showProgressDialog(this, getString(R.string.progress_loading));
         getSupportLoaderManager().initLoader(0, args, this);
+        onClickCollapse();
     }
 
     @Override
