@@ -43,6 +43,8 @@ public class SignInActivity extends Activity implements View.OnClickListener {
 
         ButterKnife.bind(this);
 
+        mLoginButton.setOnClickListener(this);
+
         Intent intent = getIntent();
         if (intent.getBooleanExtra("add_account", false)) {
             mStartOauthButton.setVisibility(View.GONE);
@@ -67,7 +69,7 @@ public class SignInActivity extends Activity implements View.OnClickListener {
             }
         }
 
-        mLoginButton.setOnClickListener(this);
+
     }
 
     @SuppressWarnings("NullableProblems")
@@ -164,6 +166,8 @@ public class SignInActivity extends Activity implements View.OnClickListener {
                 UserIconManager.addUserIconMap(user);
                 MessageUtil.showToast(R.string.toast_sign_in_success);
                 successOAuth();
+            } else {
+                MessageUtil.showToast(R.string.toast_sign_in_failure);
             }
         }
     }
