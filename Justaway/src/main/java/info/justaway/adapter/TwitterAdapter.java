@@ -177,6 +177,10 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
     }
 
     public boolean filterRetweet(Row row) {
+        return false; // Disabled
+    }
+
+    public boolean filterRetweetTest(Row row) {
         if (row.isStatus()) {
             try {
                 Status status = row.getStatus();

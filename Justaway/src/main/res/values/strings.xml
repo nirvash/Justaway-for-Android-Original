@@ -256,5 +256,5 @@
     <string name="pref_description_talk_order_newest">Display the conversation from newest to oldest.</string>
     <string name="copy_success">Copy Success</string>
     <string name="context_menu_copy_id">Copy ID</string>
-    <string name="button_fav_and_retweet"><![CDATA[Fav&RT]]></string>
+    <string name="button_fav_and_retweet">Fav &amp; RT</string>
 </resources>
