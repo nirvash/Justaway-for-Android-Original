@@ -564,11 +564,12 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(R.string.confirm_retweet);
             builder.setMessage(status.getText());
-            builder.setNeutralButton(getString(R.string.button_quote),
+            builder.setNeutralButton(getString(R.string.button_fav_and_retweet),
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ActionUtil.doQuote(status, getActivity());
+                            ActionUtil.doRetweet(status.getId());
+                            ActionUtil.doFavorite(status.getId());
                             dismiss();
                         }
                     }
