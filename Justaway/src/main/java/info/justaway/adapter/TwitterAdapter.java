@@ -601,7 +601,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         if (quotedStatus != null) {
             holder.mQuotedDisplayName.setText(quotedStatus.getUser().getName());
             holder.mQuotedScreenName.setText(quotedStatus.getUser().getScreenName());
-            holder.mQuotedStatus.setText(quotedStatus.getText());
+            holder.mQuotedStatus.setText(StatusUtil.generateUnderline(quotedStatus.getText(), getContext()));
             holder.mQuotedStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
 
             // プレビュー表示On
