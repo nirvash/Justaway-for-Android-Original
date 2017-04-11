@@ -160,22 +160,16 @@ public class StatusUtil {
             }
         }
 
-        if (status.getExtendedMediaEntities().length > 0) {
-            for (MediaEntity media : status.getExtendedMediaEntities()) {
-                imageUrls.add(media.getMediaURL());
-            }
-        } else {
-            for (MediaEntity media : status.getMediaEntities()) {
-                imageUrls.add(media.getMediaURL());
-            }
+        for (MediaEntity media : status.getMediaEntities()) {
+            imageUrls.add(media.getMediaURL());
         }
 
         return imageUrls;
     }
 
     public static String getVideoUrl(Status status) {
-        for (final ExtendedMediaEntity extendedMediaEntity : status.getExtendedMediaEntities()) {
-            for (final ExtendedMediaEntity.Variant videoVariant : extendedMediaEntity.getVideoVariants()) {
+        for (final MediaEntity mediaEntity : status.getMediaEntities()) {
+            for (final MediaEntity.Variant videoVariant : mediaEntity.getVideoVariants()) {
                 if (videoVariant.getUrl().lastIndexOf("mp4") != -1) {
                     return videoVariant.getUrl();
                 }

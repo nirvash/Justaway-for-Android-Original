@@ -98,7 +98,8 @@ public class TwitterManager {
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         twitter4j.conf.Configuration conf = configurationBuilder.setOAuthConsumerKey(getConsumerKey())
                 .setOAuthConsumerSecret(getConsumerSecret()).setOAuthAccessToken(token.getToken())
-                .setOAuthAccessTokenSecret(token.getTokenSecret()).build();
+                .setOAuthAccessTokenSecret(token.getTokenSecret())
+                .setTweetModeExtended(true).build();
         return new TwitterStreamFactory(conf).getInstance();
     }
 

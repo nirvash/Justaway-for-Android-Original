@@ -89,11 +89,15 @@ public class MuteSettings {
         if (sMuteSettingsData.sourceMap.get(StatusUtil.getClientName(source.getSource())) != null) {
             return true;
         }
-        String text = StatusUtil.getExpandedText(source);
-        for (String word : getWords()) {
-            if (text.contains(word)) {
-                return true;
+        try {
+            String text = StatusUtil.getExpandedText(source);
+            for (String word : getWords()) {
+                if (text.contains(word)) {
+                    return true;
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }
