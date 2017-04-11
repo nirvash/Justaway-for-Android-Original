@@ -451,17 +451,13 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                     MessageUtil.showToast(R.string.toast_protected_tweet_can_not_share);
                     return;
                 }
-                Long id = FavRetweetManager.getRtId(status);
-                if (id != null) {
-                    if (id == 0) {
-                        MessageUtil.showToast(R.string.toast_destroy_retweet_progress);
-                    } else {
-                        DialogFragment dialog = new DestroyRetweetDialogFragment();
-                        Bundle args = new Bundle(1);
-                        args.putSerializable("status", status);
-                        dialog.setArguments(args);
-                        EventBus.getDefault().post(new AlertDialogEvent(dialog));
-                    }
+
+                if (status.isRetweeted()) {
+                    DialogFragment dialog = new DestroyRetweetDialogFragment();
+                    Bundle args = new Bundle(1);
+                    args.putSerializable("status", status);
+                    dialog.setArguments(args);
+                    EventBus.getDefault().post(new AlertDialogEvent(dialog));
                 } else {
                     DialogFragment dialog = new RetweetDialogFragment();
                     Bundle args = new Bundle(1);
@@ -475,7 +471,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         holder.mDoFav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (holder.mDoFav.getTag().equals("is_fav")) {
+                if (status.isFavorited()) {
                     holder.mDoFav.setTag("no_fav");
                     holder.mDoFav.setTextColor(Color.parseColor("#666666"));
                     ActionUtil.doDestroyFavorite(status.getId());
@@ -487,13 +483,13 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             }
         });
 
-        if (FavRetweetManager.getRtId(status) != null) {
+        if (status.isRetweeted()) {
             holder.mDoRetweet.setTextColor(ContextCompat.getColor(mContext, R.color.holo_green_light));
         } else {
             holder.mDoRetweet.setTextColor(Color.parseColor("#666666"));
         }
 
-        if (FavRetweetManager.isFav(status)) {
+        if (status.isFavorited()) {
             holder.mDoFav.setTag("is_fav");
             holder.mDoFav.setTextColor(ContextCompat.getColor(mContext, R.color.holo_orange_light));
         } else {
