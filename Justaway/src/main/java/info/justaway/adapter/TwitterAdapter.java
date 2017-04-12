@@ -246,6 +246,19 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         }
     }
 
+    public void updateFavorite(long id, boolean isFavorited) {
+        for (int i = 0; i < getCount(); i++) {
+            Row row = getItem(i);
+            Status target = row.getStatus();
+            if (target.getId() == id ||
+                target.isRetweet() && target.getRetweetedStatus().getId() == id) {
+                row.setFavorite(isFavorited);
+                notifyDataSetChanged();
+                // break; RTの場合複数タイムラインに表示されているので
+            }
+        }
+    }
+
     @SuppressWarnings("unused")
     public void replaceStatus(Status status) {
         for (int i = 0; i < getCount(); i++) {
@@ -355,11 +368,11 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {
-                renderStatus(holder, status, null, row.getSource());
+                renderStatus(holder, row, status, null, row.getSource());
             } else if (retweet == null) {
-                renderStatus(holder, status, null, null);
+                renderStatus(holder, row, status, null, null);
             } else {
-                renderStatus(holder, retweet, status, null);
+                renderStatus(holder, row, retweet, status, null);
             }
         }
 
@@ -416,7 +429,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
     }
 
     @SuppressLint("SetTextI18n")
-    private void renderStatus(final ViewHolder holder, final Status status, Status retweet,
+    private void renderStatus(final ViewHolder holder, final Row row, final Status status, Status retweet,
                               User favorite) {
 
         long userId = AccessTokenManager.getUserId();
@@ -471,7 +484,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         holder.mDoFav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (status.isFavorited()) {
+                if (row.isFavorited()) {
                     holder.mDoFav.setTag("no_fav");
                     holder.mDoFav.setTextColor(Color.parseColor("#666666"));
                     ActionUtil.doDestroyFavorite(status.getId());
@@ -489,7 +502,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             holder.mDoRetweet.setTextColor(Color.parseColor("#666666"));
         }
 
-        if (status.isFavorited()) {
+        if (row.isFavorited()) {
             holder.mDoFav.setTag("is_fav");
             holder.mDoFav.setTextColor(ContextCompat.getColor(mContext, R.color.holo_orange_light));
         } else {

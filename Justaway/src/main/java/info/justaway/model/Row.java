@@ -10,11 +10,16 @@ public class Row {
     private final static int TYPE_FAVORITE = 1;
     private final static int TYPE_DM = 2;
 
+    private final static int FAV_STATUS = 0;
+    private final static int FAV_FAVORITE = 1;
+    private final static int FAV_UNFAVORITE = 2;
+
     private Status status;
     private DirectMessage message;
     private User source;
     private User target;
     private int type;
+    private int favorited = FAV_STATUS;
 
     public Row() {
         super();
@@ -93,5 +98,17 @@ public class Row {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorited = favorite ? FAV_FAVORITE : FAV_UNFAVORITE;
+    }
+
+    public boolean isFavorited() {
+        if (this.favorited == FAV_STATUS) {
+            return this.status.isFavorited();
+        } else {
+            return this.favorited == FAV_FAVORITE;
+        }
     }
 }

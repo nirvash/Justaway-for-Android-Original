@@ -17,11 +17,6 @@ public class FavoriteTask extends AsyncTask<Void, Void, TwitterException> {
     public FavoriteTask(long statusId) {
         mStatusId = statusId;
 
-        /**
-         * 先にsetFavしておかないとViewの星が戻ってしまう、
-         * 重複エラー以外の理由で失敗し場合（通信エラー等）は戻す
-         */
-        FavRetweetManager.setFav(mStatusId);
         EventBus.getDefault().post(new StatusActionEvent());
     }
 
@@ -42,7 +37,6 @@ public class FavoriteTask extends AsyncTask<Void, Void, TwitterException> {
         } else if (e.getErrorCode() == 139) {
             MessageUtil.showToast(R.string.toast_favorite_already);
         } else {
-            FavRetweetManager.removeFav(mStatusId);
             EventBus.getDefault().post(new StatusActionEvent());
             MessageUtil.showToast(R.string.toast_favorite_failure);
         }

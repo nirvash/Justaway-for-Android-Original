@@ -12,6 +12,7 @@ import info.justaway.event.model.StreamingCreateStatusEvent;
 import info.justaway.event.model.StreamingDestroyMessageEvent;
 import info.justaway.event.model.StreamingDestroyStatusEvent;
 import info.justaway.event.model.StreamingUnFavoriteEvent;
+import info.justaway.event.model.StreamingUpdateSelfFavoriteEvent;
 import info.justaway.model.AccessTokenManager;
 import info.justaway.model.FavRetweetManager;
 import info.justaway.model.Relationship;
@@ -119,7 +120,8 @@ public class MyUserStreamAdapter extends UserStreamAdapter {
         Row row = Row.newFavorite(source, target, status);
         // 自分の fav を反映
         if (source.getId() == AccessTokenManager.getUserId()) {
-            FavRetweetManager.setFav(status.getId());
+            row.setFavorite(true); // 自分で Fav したフラグを立てる (なぜか status.isFavorited は false になっている)
+            EventBus.getDefault().post(new StreamingUpdateSelfFavoriteEvent(status.getId(), true));
             EventBus.getDefault().post(new StreamingCreateFavoriteEvent(row));
             return;
         }
@@ -158,7 +160,7 @@ public class MyUserStreamAdapter extends UserStreamAdapter {
         }
         // 自分の unfav を反映
         if (arg0.getId() == AccessTokenManager.getUserId()) {
-            FavRetweetManager.removeFav(arg2.getId());
+            EventBus.getDefault().post(new StreamingUpdateSelfFavoriteEvent(arg2.getId(), false));
         }
         if (mPause) {
             mStreamingUnFavoriteEvents.add(new StreamingUnFavoriteEvent(arg0, arg2));

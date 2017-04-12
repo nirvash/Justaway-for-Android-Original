@@ -3,6 +3,9 @@ package info.justaway.fragment.main.tab;
 import android.os.AsyncTask;
 import android.view.View;
 
+import info.justaway.event.model.StreamingCreateFavoriteEvent;
+import info.justaway.event.model.StreamingUnFavoriteEvent;
+import info.justaway.event.model.StreamingUpdateSelfFavoriteEvent;
 import info.justaway.model.AccessTokenManager;
 import info.justaway.model.Row;
 import info.justaway.model.TabManager;
@@ -93,4 +96,17 @@ public class TimelineFragment extends BaseFragment {
             }
         }
     }
+
+    /**
+     * ストリーミングAPIからふぁぼを受け取った時のイベント
+     * @param event ふぁぼイベント
+     */
+    public void onEventMainThread(StreamingUpdateSelfFavoriteEvent event) {
+        try {
+            mAdapter.updateFavorite(event.getId(), event.isFavorited());
+        } catch (Exception e) {
+            // NOP
+        }
+    }
+
 }
