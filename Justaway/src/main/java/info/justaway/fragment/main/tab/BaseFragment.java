@@ -85,19 +85,19 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        /**
-         * mMainPagerAdapter.notifyDataSetChanged() された時に
-         * onCreateView と onActivityCreated がインスタンスが生きたまま呼ばれる
-         * 多重に初期化処理を実行しないように変数チェックを行う
-         */
-        if (mAdapter == null) {
-            // Status(ツイート)をViewに描写するアダプター
-            mAdapter = new TwitterAdapter(getActivity(), R.layout.row_tweet);
-            mListView.setVisibility(View.GONE);
-            taskExecute();
-        }
+                /**
+                 * mMainPagerAdapter.notifyDataSetChanged() された時に
+                 * onCreateView と onActivityCreated がインスタンスが生きたまま呼ばれる
+                 * 多重に初期化処理を実行しないように変数チェックを行う
+                 */
+                if (mAdapter == null) {
+                    // Status(ツイート)をViewに描写するアダプター
+                    mAdapter = new TwitterAdapter(getActivity(), R.layout.row_tweet);
+                    mListView.setVisibility(View.GONE);
+                    taskExecute();
+                }
 
-        mListView.setAdapter(mAdapter);
+                mListView.setAdapter(mAdapter);
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import de.greenrobot.event.EventBus;
 import info.justaway.R;
 import info.justaway.event.action.StatusActionEvent;
+import info.justaway.event.model.StreamingUpdateSelfRetweetEvent;
 import info.justaway.model.FavRetweetManager;
 import info.justaway.model.TwitterManager;
 import info.justaway.util.MessageUtil;
@@ -24,11 +25,9 @@ public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
     @Override
     protected TwitterException doInBackground(Void... params) {
         try {
-            twitter4j.Status status = TwitterManager.getTwitter().retweetStatus(mStatusId);
-            FavRetweetManager.setRtId(status.getRetweetedStatus().getId(), status.getId());
+            TwitterManager.getTwitter().retweetStatus(mStatusId);
             return null;
         } catch (TwitterException e) {
-            FavRetweetManager.setRtId(mStatusId, null);
             e.printStackTrace();
             return e;
         }
@@ -38,6 +37,7 @@ public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
     protected void onPostExecute(TwitterException e) {
         if (e == null) {
             MessageUtil.showToast(R.string.toast_retweet_success);
+            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mStatusId, true));
         } else if (e.getErrorCode() == ERROR_CODE_DUPLICATE) {
             MessageUtil.showToast(R.string.toast_retweet_already);
         } else {

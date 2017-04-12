@@ -18,12 +18,6 @@ public class UnFavoriteTask extends AsyncTask<Void, Void, TwitterException> {
 
     public UnFavoriteTask(long statusId) {
         mStatusId = statusId;
-
-        /**
-         * 先にremoveFavしておかないとViewの星が戻ってしまう、
-         * 重複エラー以外の理由で失敗し場合（通信エラー等）は戻す
-         */
-        FavRetweetManager.removeFav(mStatusId);
         EventBus.getDefault().post(new StatusActionEvent());
     }
 

@@ -259,6 +259,20 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         }
     }
 
+    public void updateRetweet(long id, boolean isRetweeted) {
+        for (int i = 0; i < getCount(); i++) {
+            Row row = getItem(i);
+            Status target = row.getStatus();
+            if (target.getId() == id ||
+                    target.isRetweet() && target.getRetweetedStatus().getId() == id) {
+                row.setRetweet(isRetweeted);
+                notifyDataSetChanged();
+                // break; RTの場合複数タイムラインに表示されているので
+            }
+        }
+    }
+
+
     @SuppressWarnings("unused")
     public void replaceStatus(Status status) {
         for (int i = 0; i < getCount(); i++) {
@@ -465,7 +479,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                     return;
                 }
 
-                if (status.isRetweeted()) {
+                if (row.isRetweeted()) {
                     DialogFragment dialog = new DestroyRetweetDialogFragment();
                     Bundle args = new Bundle(1);
                     args.putSerializable("status", status);
@@ -496,7 +510,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             }
         });
 
-        if (status.isRetweeted()) {
+        if (row.isRetweeted()) {
             holder.mDoRetweet.setTextColor(ContextCompat.getColor(mContext, R.color.holo_green_light));
         } else {
             holder.mDoRetweet.setTextColor(Color.parseColor("#666666"));

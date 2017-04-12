@@ -6,6 +6,7 @@ import android.view.View;
 import info.justaway.event.model.StreamingCreateFavoriteEvent;
 import info.justaway.event.model.StreamingUnFavoriteEvent;
 import info.justaway.event.model.StreamingUpdateSelfFavoriteEvent;
+import info.justaway.event.model.StreamingUpdateSelfRetweetEvent;
 import info.justaway.model.AccessTokenManager;
 import info.justaway.model.Row;
 import info.justaway.model.TabManager;
@@ -108,5 +109,19 @@ public class TimelineFragment extends BaseFragment {
             // NOP
         }
     }
+
+    /**
+     * 自分で RT したときのイベント
+     * @param event イベント
+     */
+    public void onEventMainThread(StreamingUpdateSelfRetweetEvent event) {
+        try {
+            mAdapter.updateRetweet(event.getId(), event.isRetweeted());
+        } catch (Exception e) {
+            // NOP
+        }
+    }
+
+
 
 }

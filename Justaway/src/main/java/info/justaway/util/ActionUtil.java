@@ -38,7 +38,7 @@ public class ActionUtil {
 
     public static void doDestroyRetweet(twitter4j.Status status) {
         twitter4j.Status retweet = status.getRetweetedStatus();
-        if (status.getUser().getId() == AccessTokenManager.getUserId() && retweet != null) {
+        if (status.isRetweeted() || status.getUser().getId() == AccessTokenManager.getUserId() && retweet != null) {
             // 自分がRTしたStatus
             new UnRetweetTask(retweet.getId(), status.getId()).execute();
         } else {

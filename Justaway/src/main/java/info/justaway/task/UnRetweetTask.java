@@ -6,6 +6,7 @@ import de.greenrobot.event.EventBus;
 import info.justaway.R;
 import info.justaway.event.action.StatusActionEvent;
 import info.justaway.event.model.StreamingDestroyStatusEvent;
+import info.justaway.event.model.StreamingUpdateSelfRetweetEvent;
 import info.justaway.model.FavRetweetManager;
 import info.justaway.model.TwitterManager;
 import info.justaway.util.MessageUtil;
@@ -21,7 +22,6 @@ public class UnRetweetTask extends AsyncTask<Void, Void, TwitterException> {
         mRetweetedStatusId = retweetedStatusId;
         mStatusId = statusId;
         if (mRetweetedStatusId > 0) {
-            FavRetweetManager.setRtId(mRetweetedStatusId, null);
             EventBus.getDefault().post(new StatusActionEvent());
         }
     }
@@ -42,6 +42,7 @@ public class UnRetweetTask extends AsyncTask<Void, Void, TwitterException> {
         if (e == null) {
             MessageUtil.showToast(R.string.toast_destroy_retweet_success);
             EventBus.getDefault().post(new StreamingDestroyStatusEvent(mStatusId));
+            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mStatusId, false));
         } else if (e.getErrorCode() == ERROR_CODE_DUPLICATE) {
             MessageUtil.showToast(R.string.toast_destroy_retweet_already);
         } else {

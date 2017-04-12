@@ -14,12 +14,17 @@ public class Row {
     private final static int FAV_FAVORITE = 1;
     private final static int FAV_UNFAVORITE = 2;
 
+    private final static int RT_STATUS = 0;
+    private final static int RT_RETWEETED = 1;
+    private final static int RT_NOT_RETWEETED = 2;
+
     private Status status;
     private DirectMessage message;
     private User source;
     private User target;
     private int type;
     private int favorited = FAV_STATUS;
+    private int retweeeted = RT_STATUS;
 
     public Row() {
         super();
@@ -104,11 +109,32 @@ public class Row {
         this.favorited = favorite ? FAV_FAVORITE : FAV_UNFAVORITE;
     }
 
+    public void setRetweet(boolean retweeted) {
+        this.retweeeted = retweeted ? RT_RETWEETED : RT_NOT_RETWEETED;
+    }
+
     public boolean isFavorited() {
         if (this.favorited == FAV_STATUS) {
-            return this.status.isFavorited();
+            if (this.status.isRetweet()) {
+                return this.status.getRetweetedStatus().isFavorited();
+            } else {
+                return this.status.isFavorited();
+            }
         } else {
             return this.favorited == FAV_FAVORITE;
+        }
+    }
+
+    public boolean isRetweeted() {
+        if (this.retweeeted == RT_STATUS) {
+            if (this.status.isRetweeted()) {
+                return true;
+            } else if (this.status.isRetweet()) {
+                return this.status.getRetweetedStatus().isRetweeted();
+            }
+            return false;
+        } else {
+            return this.retweeeted == RT_RETWEETED;
         }
     }
 }
