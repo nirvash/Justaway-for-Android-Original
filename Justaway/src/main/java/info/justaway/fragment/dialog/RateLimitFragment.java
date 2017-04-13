@@ -7,25 +7,25 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 
+import java.util.Map;
+
 import info.justaway.R;
+import info.justaway.model.TwitterManager;
 import info.justaway.util.ActionUtil;
+import twitter4j.RateLimitStatus;
 import twitter4j.Status;
+import twitter4j.TwitterException;
 
 public class RateLimitFragment extends DialogFragment {
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-/*
-        final Status status = (Status) getArguments().getSerializable("status");
-        final long currentUserRetweetId = (long) getArguments().getSerializable("currentUserRetweetId");
-        if (status == null) {
-            return null;
-        }
-*/
+        final String text = (String) getArguments().getSerializable("text");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.menu_rate_limit);
-        builder.setMessage("hoge");
+        builder.setMessage(text);
         builder.setNegativeButton(getString(R.string.button_ok),
                 new DialogInterface.OnClickListener() {
                     @Override

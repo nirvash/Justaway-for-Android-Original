@@ -66,6 +66,7 @@ import info.justaway.model.TabManager;
 import info.justaway.model.TwitterManager;
 import info.justaway.model.UserIconManager;
 import info.justaway.settings.BasicSettings;
+import info.justaway.task.GetRateLimitTask;
 import info.justaway.task.SendDirectMessageTask;
 import info.justaway.task.UpdateStatusTask;
 import info.justaway.util.KeyboardUtil;
@@ -425,8 +426,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void showRateLimitDialog() {
-        DialogFragment dialog = new RateLimitFragment();
-        EventBus.getDefault().post(new AlertDialogEvent(dialog));
+        new GetRateLimitTask().execute();
     }
 
     @Override
