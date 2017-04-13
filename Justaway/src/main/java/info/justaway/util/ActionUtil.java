@@ -6,10 +6,8 @@ import android.content.Intent;
 import de.greenrobot.event.EventBus;
 import info.justaway.MainActivity;
 import info.justaway.PostActivity;
-import info.justaway.R;
 import info.justaway.event.action.OpenEditorEvent;
 import info.justaway.model.AccessTokenManager;
-import info.justaway.model.FavRetweetManager;
 import info.justaway.task.DestroyDirectMessageTask;
 import info.justaway.task.DestroyStatusTask;
 import info.justaway.task.FavoriteTask;
@@ -21,8 +19,12 @@ import twitter4j.UserMentionEntity;
 
 public class ActionUtil {
     public static void doFavorite(Long statusId) {
-        new FavoriteTask(statusId).execute();
+        doFavorite(statusId, true);
     }
+    public static void doFavorite(Long statusId, boolean showToast) {
+        new FavoriteTask(statusId, showToast).execute();
+    }
+
 
     public static void doDestroyFavorite(Long statusId) {
         new UnFavoriteTask(statusId).execute();
@@ -37,11 +39,8 @@ public class ActionUtil {
     }
 
     public static void doDestroyRetweet(twitter4j.Status status, long currentUserRetweetId) {
-        long id = status.getCurrentUserRetweetId();
-        if (id == -1) {
-            id = currentUserRetweetId;
-        }
-        new UnRetweetTask(0, id).execute();
+        long targetId = status.isRetweet() ? status.getRetweetedStatus().getId() : status.getId();
+        new UnRetweetTask(targetId, currentUserRetweetId).execute();
     }
 
     public static void doReply(twitter4j.Status status, Context context) {

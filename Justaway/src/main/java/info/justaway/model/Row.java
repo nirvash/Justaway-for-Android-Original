@@ -120,6 +120,9 @@ public class Row {
 
     public long getCurrentUserRetweetId() {
         if (this.currentUserRetweetId == -1) {
+            if (this.status.getCurrentUserRetweetId() != -1) {
+                return this.status.getCurrentUserRetweetId();
+            }
             if (this.status.isRetweet() && this.status.getUser().getId() == AccessTokenManager.getUserId()) {
                 return this.status.getId();
             }

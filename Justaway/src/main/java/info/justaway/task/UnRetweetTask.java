@@ -61,9 +61,13 @@ public class UnRetweetTask extends AsyncTask<Void, Void, TwitterException> {
         if (e == null) {
             MessageUtil.showToast(R.string.toast_destroy_retweet_success);
             EventBus.getDefault().post(new StreamingDestroyStatusEvent(mStatusId));
-            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mStatusId, -1, false));
+            // RT を取り消した対象を指定してその状態を変更するので実際に削除したツイートの mStatusId ではなく
+            // mRetweetedStatusId を渡す
+            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mRetweetedStatusId, -1, false));
         } else if (e.getErrorCode() == ERROR_CODE_DUPLICATE) {
             MessageUtil.showToast(R.string.toast_destroy_retweet_already);
+            // 状態を現状にあわせる
+            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mRetweetedStatusId, -1, false));
         } else {
             if (mRetweetedStatusId > 0) {
                 EventBus.getDefault().post(new StatusActionEvent());

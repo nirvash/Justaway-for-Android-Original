@@ -20,7 +20,6 @@ public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
 
     public RetweetTask(long statusId) {
         mStatusId = statusId;
-        FavRetweetManager.setRtId(statusId, (long) 0);
         EventBus.getDefault().post(new StatusActionEvent());
     }
 

@@ -20,7 +20,7 @@ public class FavoriteActivity extends Activity {
         }
         long statusId = intent.getLongExtra("statusId", -1L);
         if (statusId > 0) {
-            new FavoriteTask(statusId).execute();
+            new FavoriteTask(statusId, true).execute();
         }
         finish();
     }

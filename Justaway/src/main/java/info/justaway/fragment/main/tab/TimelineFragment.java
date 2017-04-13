@@ -98,29 +98,6 @@ public class TimelineFragment extends BaseFragment {
         }
     }
 
-    /**
-     * ストリーミングAPIからふぁぼを受け取った時のイベント
-     * @param event ふぁぼイベント
-     */
-    public void onEventMainThread(StreamingUpdateSelfFavoriteEvent event) {
-        try {
-            mAdapter.updateFavorite(event.getId(), event.isFavorited());
-        } catch (Exception e) {
-            // NOP
-        }
-    }
-
-    /**
-     * 自分で RT したときのイベント
-     * @param event イベント
-     */
-    public void onEventMainThread(StreamingUpdateSelfRetweetEvent event) {
-        try {
-            mAdapter.updateRetweet(event.getId(), event.getRtId(), event.isRetweeted());
-        } catch (Exception e) {
-            // NOP
-        }
-    }
 
 
 

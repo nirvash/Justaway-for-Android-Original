@@ -260,6 +260,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
     }
 
     public void updateRetweet(long id, long rtId, boolean isRetweeted) {
+        Log.d("updateRetweet", String.format("id %d, rtId %d, isRetweeted %s", id, rtId, isRetweeted));
         for (int i = 0; i < getCount(); i++) {
             Row row = getItem(i);
             Status target = row.getStatus();
@@ -666,8 +667,10 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ActionUtil.doRetweet(status.getId());
-                            ActionUtil.doFavorite(status.getId());
+                            ActionUtil.doRetweet(status.getId()); // 順序大事
+                            if (!status.isFavorited()) {
+                                ActionUtil.doFavorite(status.getId(), false);
+                            }
                             dismiss();
                         }
                     }

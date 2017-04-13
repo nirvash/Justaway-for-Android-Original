@@ -10,6 +10,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -22,6 +23,8 @@ import info.justaway.event.action.PostAccountChangeEvent;
 import info.justaway.event.action.StatusActionEvent;
 import info.justaway.event.model.StreamingCreateStatusEvent;
 import info.justaway.event.model.StreamingDestroyStatusEvent;
+import info.justaway.event.model.StreamingUpdateSelfFavoriteEvent;
+import info.justaway.event.model.StreamingUpdateSelfRetweetEvent;
 import info.justaway.event.settings.BasicSettingsChangeEvent;
 import info.justaway.listener.StatusClickListener;
 import info.justaway.listener.StatusLongClickListener;
@@ -335,6 +338,14 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
      * @param event ツイート
      */
     public void onEventMainThread(StreamingDestroyStatusEvent event) {
+        Iterator<Row> itr = mStackRows.iterator();
+        while (itr.hasNext()) {
+            Row row = itr.next();
+            if (row.getStatus().getId() == event.getStatusId()) {
+                itr.remove();
+            }
+        }
+
         ArrayList<Integer> removePositions = mAdapter.removeStatus(event.getStatusId());
         for (Integer removePosition : removePositions) {
             if (removePosition >= 0) {
@@ -368,6 +379,36 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
             reload();
         } else {
             clear();
+        }
+    }
+
+
+    /**
+     * ストリーミングAPIからふぁぼを受け取った時のイベント
+     * @param event ふぁぼイベント
+     */
+    public void onEventMainThread(StreamingUpdateSelfFavoriteEvent event) {
+        try {
+            for (Row row : mStackRows) {
+                if (row.isRetweeted() && row.getStatus().getRetweetedStatus().getId() == event.getId()) {
+                    row.setFavorite(event.isFavorited());
+                }
+            }
+            mAdapter.updateFavorite(event.getId(), event.isFavorited());
+        } catch (Exception e) {
+            // NOP
+        }
+    }
+
+    /**
+     * 自分で RT したときのイベント
+     * @param event イベント
+     */
+    public void onEventMainThread(StreamingUpdateSelfRetweetEvent event) {
+        try {
+            mAdapter.updateRetweet(event.getId(), event.getRtId(), event.isRetweeted());
+        } catch (Exception e) {
+            // NOP
         }
     }
 }
