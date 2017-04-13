@@ -51,10 +51,12 @@ import info.justaway.event.action.OpenEditorEvent;
 import info.justaway.event.action.PostAccountChangeEvent;
 import info.justaway.event.connection.StreamingConnectionEvent;
 import info.justaway.event.settings.BasicSettingsChangeEvent;
+import info.justaway.fragment.dialog.RateLimitFragment;
 import info.justaway.fragment.main.StreamingSwitchDialogFragment;
 import info.justaway.fragment.main.tab.BaseFragment;
 import info.justaway.fragment.main.tab.DirectMessagesFragment;
 import info.justaway.fragment.main.tab.FavoritesFragment;
+import info.justaway.fragment.main.tab.FilterFragment;
 import info.justaway.fragment.main.tab.InteractionsFragment;
 import info.justaway.fragment.main.tab.SearchFragment;
 import info.justaway.fragment.main.tab.TimelineFragment;
@@ -415,8 +417,16 @@ public class MainActivity extends FragmentActivity {
             case R.id.feedback:
                 EventBus.getDefault().post(new OpenEditorEvent(" #justaway", null, null, null));
                 break;
+            case R.id.rate_limit:
+                showRateLimitDialog();
+                break;
         }
         return true;
+    }
+
+    private void showRateLimitDialog() {
+        DialogFragment dialog = new RateLimitFragment();
+        EventBus.getDefault().post(new AlertDialogEvent(dialog));
     }
 
     @Override
@@ -552,6 +562,8 @@ public class MainActivity extends FragmentActivity {
                     Bundle args = new Bundle();
                     args.putString("searchWord", tab.name);
                     mMainPagerAdapter.addTab(SearchFragment.class, args, tab.getName(), tab.id, tab.name);
+                } else if (tab.id == TabManager.FILTER_TAB_ID) {
+                    mMainPagerAdapter.addTab(FilterFragment.class, null, tab.getName(), tab.id, tab.name);
                 } else {
                     Bundle args = new Bundle();
                     args.putLong("userListId", tab.id);

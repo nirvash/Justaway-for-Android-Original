@@ -16,7 +16,9 @@ public class TabManager {
     public static final long INTERACTIONS_TAB_ID = -2L;
     public static final long DIRECT_MESSAGES_TAB_ID = -3L;
     public static final long FAVORITES_TAB_ID = -4L;
-    public static final long SEARCH_TAB_ID = -5L;
+    public static final long FILTER_TAB_ID = -5L;
+    public static final long SEARCH_TAB_ID = -6L; // これ以降はサーチタブになる
+
     private static final String TABS = "tabs-";
     private static ArrayList<Tab> sTabs = new ArrayList<>();
 
@@ -63,6 +65,7 @@ public class TabManager {
         tabs.add(new Tab(INTERACTIONS_TAB_ID));
         tabs.add(new Tab(DIRECT_MESSAGES_TAB_ID));
         tabs.add(new Tab(FAVORITES_TAB_ID));
+        tabs.add(new Tab(FILTER_TAB_ID));
         return tabs;
     }
 
@@ -98,6 +101,8 @@ public class TabManager {
                 return JustawayApplication.getApplication().getString(R.string.title_favorites);
             } else if (id <= SEARCH_TAB_ID) {
                 return JustawayApplication.getApplication().getString(R.string.title_search) + ":" + name;
+            } else if (id <= FILTER_TAB_ID) {
+                return JustawayApplication.getApplication().getString(R.string.title_filter) ;
             } else {
                 return name;
             }
@@ -114,6 +119,8 @@ public class TabManager {
                 return R.string.fontello_star;
             } else if (id <= SEARCH_TAB_ID) {
                 return R.string.fontello_search;
+            } else if (id <= FILTER_TAB_ID) {
+                return R.string.fontello_tag;
             } else {
                 return R.string.fontello_list;
             }

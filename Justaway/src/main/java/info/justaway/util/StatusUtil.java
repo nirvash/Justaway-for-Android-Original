@@ -244,4 +244,12 @@ public class StatusUtil {
         }
         return text;
     }
+
+    public static boolean hasGranblueFantasyId(String text) {
+        String textFiltered = Normalizer.normalize(text, Normalizer.Form.NFKC);
+        textFiltered = textFiltered.toLowerCase();
+
+        Matcher m = GRANBLUE_FANTASY_ID_PATTERN.matcher(textFiltered);
+        return m.find();
+    }
 }
