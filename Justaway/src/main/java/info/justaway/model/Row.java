@@ -25,6 +25,7 @@ public class Row {
     private int type;
     private int favorited = FAV_STATUS;
     private int retweeeted = RT_STATUS;
+    private long currentUserRetweetId = -1;
 
     public Row() {
         super();
@@ -113,6 +114,19 @@ public class Row {
         this.retweeeted = retweeted ? RT_RETWEETED : RT_NOT_RETWEETED;
     }
 
+    public void setCurrentUserRetweetId(long id) {
+        this.currentUserRetweetId = id;
+    }
+
+    public long getCurrentUserRetweetId() {
+        if (this.currentUserRetweetId == -1) {
+            if (this.status.isRetweet() && this.status.getUser().getId() == AccessTokenManager.getUserId()) {
+                return this.status.getId();
+            }
+        }
+        return this.currentUserRetweetId;
+    }
+
     public boolean isFavorited() {
         if (this.favorited == FAV_STATUS) {
             if (this.status.isRetweet()) {
@@ -127,12 +141,10 @@ public class Row {
 
     public boolean isRetweeted() {
         if (this.retweeeted == RT_STATUS) {
-            if (this.status.isRetweeted()) {
+            if (this.status.isRetweet() && this.status.getUser().getId() == AccessTokenManager.getUserId()) {
                 return true;
-            } else if (this.status.isRetweet()) {
-                return this.status.getRetweetedStatus().isRetweeted();
             }
-            return false;
+            return this.status.isRetweeted();
         } else {
             return this.retweeeted == RT_RETWEETED;
         }

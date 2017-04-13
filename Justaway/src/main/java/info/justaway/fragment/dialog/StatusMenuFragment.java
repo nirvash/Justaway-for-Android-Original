@@ -295,7 +295,7 @@ public class StatusMenuFragment extends DialogFragment {
             adapter.add(new Menu(R.string.context_menu_destroy_retweet, new Runnable() {
                 @Override
                 public void run() {
-                    ActionUtil.doDestroyRetweet(status);
+                    ActionUtil.doDestroyRetweet(status, -1);
                     dismiss();
                 }
             }));

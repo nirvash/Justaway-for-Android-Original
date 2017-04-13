@@ -36,39 +36,12 @@ public class ActionUtil {
         new RetweetTask(statusId).execute();
     }
 
-    public static void doDestroyRetweet(twitter4j.Status status) {
-        twitter4j.Status retweet = status.getRetweetedStatus();
-        if (status.isRetweeted() || status.getUser().getId() == AccessTokenManager.getUserId() && retweet != null) {
-            // 自分がRTしたStatus
-            new UnRetweetTask(retweet.getId(), status.getId()).execute();
-        } else {
-            // 他人のStatusで、それを自分がRTしている
-
-            // 被リツイート
-            Long retweetedStatusId = -1L;
-
-            // リツイート
-            Long statusId = FavRetweetManager.getRtId(status.getId());
-            if (statusId != null && statusId > 0) {
-                // そのStatusそのものをRTしている
-                retweetedStatusId = status.getId();
-            } else {
-                if (retweet != null) {
-                    statusId = FavRetweetManager.getRtId(retweet.getId());
-                    if (statusId != null && statusId > 0) {
-                        // そのStatusがRTした元StatusをRTしている
-                        retweetedStatusId = retweet.getId();
-                    }
-                }
-            }
-
-            if (statusId != null && statusId == 0L) {
-                // 処理中は 0
-                MessageUtil.showToast(R.string.toast_destroy_retweet_progress);
-            } else if (statusId != null && statusId > 0 && retweetedStatusId > 0) {
-                new UnRetweetTask(retweetedStatusId, statusId).execute();
-            }
+    public static void doDestroyRetweet(twitter4j.Status status, long currentUserRetweetId) {
+        long id = status.getCurrentUserRetweetId();
+        if (id == -1) {
+            id = currentUserRetweetId;
         }
+        new UnRetweetTask(0, id).execute();
     }
 
     public static void doReply(twitter4j.Status status, Context context) {

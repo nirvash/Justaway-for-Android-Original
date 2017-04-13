@@ -9,11 +9,13 @@ import info.justaway.event.model.StreamingUpdateSelfRetweetEvent;
 import info.justaway.model.FavRetweetManager;
 import info.justaway.model.TwitterManager;
 import info.justaway.util.MessageUtil;
+import twitter4j.Status;
 import twitter4j.TwitterException;
 
 public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
 
     private long mStatusId;
+    private long mRtId = -1;
     private static final int ERROR_CODE_DUPLICATE = 37;
 
     public RetweetTask(long statusId) {
@@ -25,7 +27,10 @@ public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
     @Override
     protected TwitterException doInBackground(Void... params) {
         try {
-            TwitterManager.getTwitter().retweetStatus(mStatusId);
+            twitter4j.Status status = TwitterManager.getTwitter().retweetStatus(mStatusId);
+            if (status != null) {
+                mRtId = status.getId();
+            }
             return null;
         } catch (TwitterException e) {
             e.printStackTrace();
@@ -37,7 +42,7 @@ public class RetweetTask extends AsyncTask<Void, Void, TwitterException> {
     protected void onPostExecute(TwitterException e) {
         if (e == null) {
             MessageUtil.showToast(R.string.toast_retweet_success);
-            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mStatusId, true));
+            EventBus.getDefault().post(new StreamingUpdateSelfRetweetEvent(mStatusId, mRtId, true));
         } else if (e.getErrorCode() == ERROR_CODE_DUPLICATE) {
             MessageUtil.showToast(R.string.toast_retweet_already);
         } else {

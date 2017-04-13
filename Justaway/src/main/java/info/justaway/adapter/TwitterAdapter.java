@@ -259,13 +259,14 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         }
     }
 
-    public void updateRetweet(long id, boolean isRetweeted) {
+    public void updateRetweet(long id, long rtId, boolean isRetweeted) {
         for (int i = 0; i < getCount(); i++) {
             Row row = getItem(i);
             Status target = row.getStatus();
             if (target.getId() == id ||
                     target.isRetweet() && target.getRetweetedStatus().getId() == id) {
                 row.setRetweet(isRetweeted);
+                row.setCurrentUserRetweetId(rtId);
                 notifyDataSetChanged();
                 // break; RTの場合複数タイムラインに表示されているので
             }
@@ -481,8 +482,9 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
                 if (row.isRetweeted()) {
                     DialogFragment dialog = new DestroyRetweetDialogFragment();
-                    Bundle args = new Bundle(1);
+                    Bundle args = new Bundle(2);
                     args.putSerializable("status", status);
+                    args.putSerializable("currentUserRetweetId", row.getCurrentUserRetweetId());
                     dialog.setArguments(args);
                     EventBus.getDefault().post(new AlertDialogEvent(dialog));
                 } else {
@@ -697,6 +699,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Status status = (Status) getArguments().getSerializable("status");
+            final long currentUserRetweetId = (long) getArguments().getSerializable("currentUserRetweetId");
             if (status == null) {
                 return null;
             }
@@ -707,7 +710,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ActionUtil.doDestroyRetweet(status);
+                            ActionUtil.doDestroyRetweet(status, currentUserRetweetId);
                             dismiss();
                         }
                     }

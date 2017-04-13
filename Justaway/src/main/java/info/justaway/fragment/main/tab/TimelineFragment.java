@@ -116,7 +116,7 @@ public class TimelineFragment extends BaseFragment {
      */
     public void onEventMainThread(StreamingUpdateSelfRetweetEvent event) {
         try {
-            mAdapter.updateRetweet(event.getId(), event.isRetweeted());
+            mAdapter.updateRetweet(event.getId(), event.getRtId(), event.isRetweeted());
         } catch (Exception e) {
             // NOP
         }
