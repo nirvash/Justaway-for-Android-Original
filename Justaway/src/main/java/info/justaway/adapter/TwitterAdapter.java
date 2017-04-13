@@ -618,7 +618,12 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         });
 
         // RTの場合はRT元
-        String statusString = StatusUtil.getExpandedText(status);
+        String statusString = "";
+        if (retweet != null) {
+            statusString = StatusUtil.getExpandedText(retweet);
+        } else {
+            statusString = StatusUtil.getExpandedText(status);
+        }
         holder.mStatus.setText(StatusUtil.generateUnderline(statusString, getContext()));
         holder.mStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
 
