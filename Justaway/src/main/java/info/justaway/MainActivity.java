@@ -3,6 +3,9 @@ package info.justaway;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -1011,8 +1014,28 @@ public class MainActivity extends FragmentActivity {
         }
         if (mViewPager.getCurrentItem() == position && event.getAutoScroll()) {
             ThemeUtil.setThemeTextColor(button, R.attr.menu_text_color);
+            if (event.getTabId() == TabManager.FILTER_TAB_ID) {
+                clearNotification();
+            }
         } else {
             ThemeUtil.setThemeTextColor(button, R.attr.holo_blue);
+            if (event.getTabId() == TabManager.FILTER_TAB_ID) {
+                sendNotification();
+            }
         }
+    }
+
+    private void sendNotification() {
+        Notification n = new Notification();
+        n.icon = R.drawable.ic_notification_star;
+        n.tickerText = "新着があるぞ";
+
+        NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.notify(1, n);
+    }
+
+    private void clearNotification() {
+        NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.cancelAll();
     }
 }

@@ -89,9 +89,13 @@ public class StatusUtil {
      * @return 短縮URLを展開したツイート本文
      */
     public static String getExpandedText(Status status) {
+        return getExpandedText(status, ENABLE_EXPAND_URL);
+    }
+
+    public static String getExpandedText(Status status, boolean expandUrl) {
         String text = status.getText();
 
-        if (ENABLE_EXPAND_URL) {
+        if (expandUrl) {
             for (URLEntity url : status.getURLEntities()) {
                 Pattern p = Pattern.compile(url.getURL());
                 Matcher m = p.matcher(text);

@@ -90,7 +90,7 @@ public class MuteSettings {
             return true;
         }
         try {
-            String text = StatusUtil.getExpandedText(source);
+            String text = StatusUtil.getExpandedText(source, true);
             for (String word : getWords()) {
                 if (text.contains(word)) {
                     return true;
