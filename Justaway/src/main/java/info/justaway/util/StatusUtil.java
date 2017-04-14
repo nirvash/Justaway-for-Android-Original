@@ -40,7 +40,7 @@ public class StatusUtil {
     private static final Pattern MENTION_PATTERN = Pattern.compile("@[a-zA-Z0-9_]+");
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#\\S+");
 
-    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-fA-F])[0-9a-fA-F]{8}(?![0-9a-fA-F])");
+    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])[0-9a-fA-F]{8}(?![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])");
 //    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])[0-9a-fA-F０-９Ａ-Ｆａ-ｆ]{8}(?![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])");
 
     /**

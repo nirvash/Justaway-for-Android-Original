@@ -620,7 +620,11 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         // RTの場合はRT元
         String statusString = "";
         if (retweet != null) {
-            statusString = StatusUtil.getExpandedText(retweet);
+            if (retweet.getRetweetedStatus() != null) {
+                statusString = retweet.getRetweetedStatus().getText();
+            } else {
+                statusString = StatusUtil.getExpandedText(status);
+            }
         } else {
             statusString = StatusUtil.getExpandedText(status);
         }
