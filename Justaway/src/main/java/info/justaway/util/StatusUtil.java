@@ -5,6 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
@@ -25,6 +26,8 @@ import twitter4j.URLEntity;
 import twitter4j.UserMentionEntity;
 
 public class StatusUtil {
+    private static final boolean ENABLE_EXPAND_URL = false;
+
     private static final Pattern TWITTER_PATTERN = Pattern.compile("(\\n)?https?://twitter\\.com/[\\w\\.\\-/:#\\?=&;%~\\+]+");
     private static final Pattern TWITPIC_PATTERN = Pattern.compile("^http://twitpic\\.com/(\\w+)$");
     private static final Pattern TWIPPLE_PATTERN = Pattern.compile("^http://p\\.twipple\\.jp/(\\w+)$");
@@ -40,8 +43,9 @@ public class StatusUtil {
     private static final Pattern MENTION_PATTERN = Pattern.compile("@[a-zA-Z0-9_]+");
     private static final Pattern HASHTAG_PATTERN = Pattern.compile("#\\S+");
 
-    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])[0-9a-fA-F]{8}(?![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])");
-//    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])[0-9a-fA-F０-９Ａ-Ｆａ-ｆ]{8}(?![0-9a-fA-F０-９Ａ-Ｆａ-ｆ])");
+    // (?!)   否定先読み Foo(?!Bar) は Foo に Bar が続かないパターンのみマッチし、Bar は抽出されない (グループ括弧とみなされない)
+    // (?<!)  否定後読み (?<!Bar)Foo は Foo に Bar が先行しないパターンのみマッチし、Bar は抽出されない (グループ括弧とみなされない)
+    private static final Pattern GRANBLUE_FANTASY_ID_PATTERN = Pattern.compile("(?<![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])([0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?![0-9a-zA-Z\\.\\-/#\\?=&;%~\\+])");
 
     /**
      * source(via)からクライアント名を抜き出す
@@ -86,20 +90,24 @@ public class StatusUtil {
      */
     public static String getExpandedText(Status status) {
         String text = status.getText();
-        for (URLEntity url : status.getURLEntities()) {
-            Pattern p = Pattern.compile(url.getURL());
-            Matcher m = p.matcher(text);
-            text = m.replaceAll(url.getExpandedURL());
-        }
 
-        for (MediaEntity media : status.getMediaEntities()) {
-            Pattern p = Pattern.compile(media.getURL());
-            Matcher m = p.matcher(text);
-            text = m.replaceAll(media.getExpandedURL());
+        if (ENABLE_EXPAND_URL) {
+            for (URLEntity url : status.getURLEntities()) {
+                Pattern p = Pattern.compile(url.getURL());
+                Matcher m = p.matcher(text);
+                text = m.replaceAll(url.getExpandedURL());
+            }
+
+            for (MediaEntity media : status.getMediaEntities()) {
+                Pattern p = Pattern.compile(media.getURL());
+                Matcher m = p.matcher(text);
+                text = m.replaceAll(media.getExpandedURL());
+            }
         }
 
         Matcher m = TWITTER_PATTERN.matcher(text);
         text = m.replaceAll("");
+
         return text;
     }
 
@@ -186,8 +194,22 @@ public class StatusUtil {
 
         Matcher urlMatcher = URL_PATTERN.matcher(str);
         while (urlMatcher.find()) {
-            us = new UnderlineSpan();
+/*            us = new UnderlineSpan();
             sb.setSpan(us, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+*/
+            final Uri uri = Uri.parse(urlMatcher.group());
+            ClickableSpan cs = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                    }
+                }
+            };
+
+            sb.setSpan(cs, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         String tmpStr = Normalizer.normalize(str, Normalizer.Form.NFKC).toUpperCase();
@@ -212,10 +234,6 @@ public class StatusUtil {
             };
 
             sb.setSpan(cs, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-/*
-            us = new UnderlineSpan();
-            sb.setSpan(us, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-*/
         }
 
 /*
@@ -234,6 +252,9 @@ public class StatusUtil {
         return sb;
     }
 
+    /*
+     * 最初に見つかった ID を返す
+     */
     public static String getGranbluefantasyId(String text) {
         String textFiltered = Normalizer.normalize(text, Normalizer.Form.NFKC);
         textFiltered = textFiltered.toLowerCase();

@@ -48,6 +48,11 @@ public class FilterFragment extends BaseFragment {
             if (retweet != null && StatusUtil.hasGranblueFantasyId(retweet.getText())) {
                 return false;
             }
+
+            // 動作テスト用
+            if (row.getStatus().isRetweet()) {
+                return true; // テストするときは false
+            }
         }
         return true;
     }

@@ -2,6 +2,8 @@ package info.justaway.fragment.main.tab;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +32,7 @@ import info.justaway.listener.StatusClickListener;
 import info.justaway.listener.StatusLongClickListener;
 import info.justaway.model.AccessTokenManager;
 import info.justaway.model.Row;
+import info.justaway.model.TabManager;
 import info.justaway.settings.BasicSettings;
 import uk.co.senab.actionbarpulltorefresh.library.ActionBarPullToRefresh;
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
@@ -395,6 +398,11 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
                 }
             }
             mAdapter.updateFavorite(event.getId(), event.isFavorited());
+
+            if (getTabId() == TabManager.FAVORITES_TAB_ID && event.isFavorited()) {
+                // ふぁぼったときにふぁぼタブを青くしたいとき
+                // EventBus.getDefault().post(new NewRecordEvent(getTabId(), getSearchWord(), false));
+            }
         } catch (Exception e) {
             // NOP
         }

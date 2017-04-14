@@ -621,7 +621,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         String statusString = "";
         if (retweet != null) {
             if (retweet.getRetweetedStatus() != null) {
-                statusString = retweet.getRetweetedStatus().getText();
+                statusString = StatusUtil.getExpandedText(retweet.getRetweetedStatus());
             } else {
                 statusString = StatusUtil.getExpandedText(status);
             }

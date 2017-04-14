@@ -85,6 +85,8 @@ public class ImageUtil {
         // ツイートに含まれる画像のURLをすべて取得
         ArrayList<String> imageUrls = StatusUtil.getImageUrls(status);
         if (imageUrls.size() > 0) {
+            viewGroup.setVisibility(View.INVISIBLE);
+            wrapperViewGroup.setVisibility(View.INVISIBLE);
 
             // 画像を貼るスペースをクリア
             viewGroup.removeAllViews();
