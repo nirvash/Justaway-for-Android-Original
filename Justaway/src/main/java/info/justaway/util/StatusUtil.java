@@ -103,6 +103,13 @@ public class StatusUtil {
                 Matcher m = p.matcher(text);
                 text = m.replaceAll(media.getExpandedURL());
             }
+        } else {
+            // メディア URL は削除
+            for (MediaEntity media : status.getMediaEntities()) {
+                Pattern p = Pattern.compile(media.getURL());
+                Matcher m = p.matcher(text);
+                text = m.replaceAll("");
+            }
         }
 
         Matcher m = TWITTER_PATTERN.matcher(text);
