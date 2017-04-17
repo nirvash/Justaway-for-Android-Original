@@ -221,7 +221,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
                 mListView.setSelectionFromTop(position + count, y);
                 // 未読の新規ツイートをチラ見せ
                 if (position == 0 && y == 0) {
-                    mListView.smoothScrollToPositionFromTop(position + count, 120);
+                    // mListView.smoothScrollToPositionFromTop(position + count, 120);
                 }
             }
         }

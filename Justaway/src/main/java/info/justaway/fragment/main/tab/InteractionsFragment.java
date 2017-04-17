@@ -49,13 +49,20 @@ public class InteractionsFragment extends BaseFragment {
              * 自分のツイートがRTされた時
              */
             if (retweet != null && retweet.getUser().getId() == AccessTokenManager.getUserId()) {
-                return false;
+//                return false;
             }
 
             /**
              * 自分宛のメンション（但し「自分をメンションに含むツイートがRTされた時」はうざいので除く）
              */
             if (retweet == null && StatusUtil.isMentionForMe(status)) {
+                return false;
+            }
+
+            /*
+             * 自分の他人宛のツイート
+             */
+            if (status.getUser().getId() == AccessTokenManager.getUserId() && (status.getInReplyToUserId() != 0 || status.getUserMentionEntities().length > 0)) {
                 return false;
             }
         }
