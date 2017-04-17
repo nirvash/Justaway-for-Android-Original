@@ -287,6 +287,34 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         }
     }
 
+    public ArrayList<Integer> removeStatus2(long statusId) {
+        int position = 0;
+        ArrayList<Integer> positions = new ArrayList<>();
+        ArrayList<Row> rows = new ArrayList<>();
+        for (int i = 0; i < getCount(); i++) {
+            Row row = getItem(i);
+            if (row.isDirectMessage()) {
+                continue;
+            }
+            twitter4j.Status status = row.getStatus();
+            twitter4j.Status retweet = status.getRetweetedStatus();
+            if (row.getStatus().getId() == statusId || (retweet != null && retweet.getId() == statusId)) {
+                if (row.getStatus().getUser().getId() == AccessTokenManager.getUserId()) {
+                    rows.add(row);
+                    positions.add(position);
+                } else {
+                    row.setDeleted(true);
+                }
+            }
+            position++;
+        }
+        for (Row row : rows) {
+            remove(row);
+        }
+        notifyDataSetChanged();
+        return positions;
+    }
+
     public ArrayList<Integer> removeStatus(long statusId) {
         int position = 0;
         ArrayList<Integer> positions = new ArrayList<>();
@@ -366,6 +394,9 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             holder.mScreenName.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize - 2);
             holder.mDatetimeRelative.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize - 2);
         }
+
+        holder.mStatus.setBackgroundColor(Color.TRANSPARENT);
+
 
         // 表示すべきデータの取得
         Row row = getItem(position);
@@ -657,6 +688,12 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         } else {
             holder.mImagesContainer.setVisibility(View.GONE);
             holder.mImagesContainerWrapper.setVisibility(View.GONE);
+        }
+
+
+        // ツイ消し表示
+        if (row.isDeleted()) {
+            holder.mStatus.setBackgroundColor(Color.GRAY);
         }
     }
 

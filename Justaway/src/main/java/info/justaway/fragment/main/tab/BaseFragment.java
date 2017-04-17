@@ -345,11 +345,15 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
         while (itr.hasNext()) {
             Row row = itr.next();
             if (row.getStatus().getId() == event.getStatusId()) {
-                itr.remove();
+                if (row.getStatus().getUser().getId() == AccessTokenManager.getUserId()) {
+                    itr.remove();
+                } else {
+                    row.setDeleted(true);
+                }
             }
         }
 
-        ArrayList<Integer> removePositions = mAdapter.removeStatus(event.getStatusId());
+        ArrayList<Integer> removePositions = mAdapter.removeStatus2(event.getStatusId());
         for (Integer removePosition : removePositions) {
             if (removePosition >= 0) {
                 int visiblePosition = mListView.getFirstVisiblePosition();

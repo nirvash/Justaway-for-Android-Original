@@ -26,6 +26,7 @@ public class Row {
     private int favorited = FAV_STATUS;
     private int retweeeted = RT_STATUS;
     private long currentUserRetweetId = -1;
+    private boolean isDeleted = false;
 
     public Row() {
         super();
@@ -151,5 +152,13 @@ public class Row {
         } else {
             return this.retweeeted == RT_RETWEETED;
         }
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }
