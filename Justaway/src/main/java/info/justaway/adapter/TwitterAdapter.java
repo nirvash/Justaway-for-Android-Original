@@ -619,7 +619,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         } else {
 
             // 自分へのリプ
-            if (StatusUtil.isMentionForMe(status)) {
+            if (false && StatusUtil.isMentionForMe(status)) { // この表示要らない
                 holder.mActionIcon.setText(R.string.fontello_at);
                 holder.mActionIcon.setTextColor(ContextCompat.getColor(mContext, R.color.holo_red_light));
                 holder.mActionByDisplayName.setText(status.getUser().getName());
