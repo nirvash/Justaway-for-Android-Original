@@ -1,9 +1,12 @@
 package info.justaway.util;
 
+import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -95,14 +98,25 @@ public class ImageUtil {
                 ImageView image = new ImageView(context);
                 image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 LinearLayout.LayoutParams layoutParams =
-                        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 240);
-                layoutParams.weight = 1.0f;
-                if (index > 0) {
-                    layoutParams.setMargins(20, 0, 0, 0);
+                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 240, 1.0f);
+                if (imageUrls.size() > 1) {
+                    if (index == 0) {
+                        layoutParams.setMargins(0, 0, 5, 0);
+                    } else if (index == imageUrls.size() - 1) {
+                        layoutParams.setMargins(5, 0, 0, 0);
+                    } else {
+                        layoutParams.setMargins(5, 0, 5, 0);
+                    }
                 }
-                // layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+
+                //layoutParams.gravity = Gravity.CENTER_VERTICAL;
+                //image.setAdjustViewBounds(true);
+                image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                if (imageUrls.size() > 1) {
+                    image.setMaxWidth(200);
+                }
                 viewGroup.addView(image, layoutParams);
-                displayRoundedImage(url, image);
+                displayImage(url, image);
 
                 if (videoUrl.isEmpty()) {
                     // 画像タップで拡大表示（ピンチイン・ピンチアウトいつかちゃんとやる）
