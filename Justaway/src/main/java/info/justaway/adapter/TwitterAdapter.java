@@ -433,6 +433,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
         long userId = AccessTokenManager.getUserId();
 
+        holder.mStatus.setVisibility(View.VISIBLE);
         holder.mDoRetweet.setVisibility(View.GONE);
         holder.mDoFav.setVisibility(View.GONE);
         holder.mRetweetCount.setVisibility(View.GONE);
