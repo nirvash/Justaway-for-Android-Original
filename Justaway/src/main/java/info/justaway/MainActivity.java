@@ -12,7 +12,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
@@ -98,7 +97,8 @@ public class MainActivity extends FragmentActivity {
     private MainPagerAdapter mMainPagerAdapter;
     private ViewPager mViewPager;
     private Status mInReplyToStatus;
-    private ActionBarDrawerToggle mDrawerToggle;
+    @SuppressWarnings("deprecation")
+    private android.support.v4.app.ActionBarDrawerToggle mDrawerToggle;
     private Activity mActivity;
     private AccessTokenAdapter mAccessTokenAdapter;
     private AccessToken mSwitchAccessToken;
@@ -151,6 +151,7 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -839,12 +840,13 @@ public class MainActivity extends FragmentActivity {
         }
     };
 
-    private ActionBarDrawerToggle getActionBarDrawerToggle() {
+    @SuppressWarnings("deprecation")
+    private android.support.v4.app.ActionBarDrawerToggle getActionBarDrawerToggle() {
         int drawer = BasicSettings.getThemeName().equals("black") ?
                 R.drawable.ic_dark_drawer :
                 R.drawable.ic_dark_drawer;
 
-        return new ActionBarDrawerToggle(
+        return new android.support.v4.app.ActionBarDrawerToggle(
                 this, mDrawerLayout, drawer, R.string.open, R.string.close) {
 //        return new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close) {
 
@@ -1019,6 +1021,7 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void sendNotification() {
         Notification n = new Notification();
         n.icon = R.drawable.ic_notification_star;
