@@ -99,49 +99,56 @@
         android:contentDescription="@string/description_icon"
         tools:src="@drawable/ic_launcher"/>
 
-    <TextView
-        android:id="@+id/display_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <RelativeLayout
+        android:id="@+id/display_name_container"
         android:layout_below="@id/retweet_container"
+        android:layout_marginRight="16dp"
         android:layout_toRightOf="@id/icon"
-        android:layout_marginBottom="5dp"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        tools:text="Justaway Factory"/>
-
-    <TextView
-        android:id="@+id/screen_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="4dp"
-        android:layout_toRightOf="@id/display_name"
-        android:layout_alignBaseline="@id/display_name"
-        android:textColor="#666666"
-        android:textSize="10sp"
-        android:lines="1"
-        android:ellipsize="end"
-        tools:ignore="SmallSp"
-        tools:text="\@justawayfactory"/>
+        android:layout_height="wrap_content">
 
-    <info.justaway.widget.FontelloTextView
-        android:id="@+id/lock"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/screen_name"
-        android:layout_alignBaseline="@id/display_name"
-        android:layout_marginLeft="4dp"
-        android:text="@string/fontello_lock"
-        android:textColor="#666666"
-        android:textSize="10sp"
-        tools:ignore="SmallSp"/>
+        <TextView
+            android:id="@+id/display_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="Justaway Factory" />
+
+        <TextView
+            android:id="@+id/screen_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/display_name"
+            android:layout_marginLeft="4dp"
+            android:layout_toRightOf="@id/display_name"
+            android:ellipsize="end"
+            android:lines="1"
+            android:textColor="#666666"
+            android:textSize="10sp"
+            tools:ignore="SmallSp"
+            tools:text="\@justawayfactory_______________________________" />
+
+        <info.justaway.widget.FontelloTextView
+            android:id="@+id/lock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/display_name"
+            android:layout_marginLeft="4dp"
+            android:layout_toRightOf="@id/screen_name"
+            android:text="@string/fontello_lock"
+            android:textColor="#666666"
+            android:textSize="10sp"
+            tools:ignore="SmallSp" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/datetime_relative"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignBaseline="@id/display_name"
+        android:layout_alignBaseline="@id/display_name_container"
         android:textColor="#666666"
         android:textSize="10sp"
         tools:ignore="SmallSp"
@@ -153,7 +160,7 @@
         android:layout_height="wrap_content"
         android:textSize="12sp"
         android:layout_toRightOf="@id/icon"
-        android:layout_below="@id/display_name"
+        android:layout_below="@id/display_name_container"
         tools:text="Hello World."/>
 
     <RelativeLayout
@@ -215,6 +222,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_marginRight="24dp"
                 android:text="@string/fontello_play"
                 android:textColor="#ffffff"
                 android:textSize="24sp"/>
@@ -240,6 +248,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginRight="24dp"
             android:text="@string/fontello_play"
             android:textColor="#ffffff"
             android:textSize="24sp"/>
