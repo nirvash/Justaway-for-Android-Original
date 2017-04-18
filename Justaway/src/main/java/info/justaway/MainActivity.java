@@ -1014,14 +1014,8 @@ public class MainActivity extends FragmentActivity {
         }
         if (mViewPager.getCurrentItem() == position && event.getAutoScroll()) {
             ThemeUtil.setThemeTextColor(button, R.attr.menu_text_color);
-            if (event.getTabId() == TabManager.FILTER_TAB_ID) {
-                clearNotification();
-            }
         } else {
             ThemeUtil.setThemeTextColor(button, R.attr.holo_blue);
-            if (event.getTabId() == TabManager.FILTER_TAB_ID) {
-                sendNotification();
-            }
         }
     }
 
