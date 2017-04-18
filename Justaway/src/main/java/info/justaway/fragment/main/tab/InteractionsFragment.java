@@ -62,7 +62,7 @@ public class InteractionsFragment extends BaseFragment {
             /*
              * 自分の他人宛のツイート
              */
-            if (status.getUser().getId() == AccessTokenManager.getUserId() && (status.getInReplyToUserId() != 0 || status.getUserMentionEntities().length > 0)) {
+            if (retweet == null && status.getUser().getId() == AccessTokenManager.getUserId() && (status.getInReplyToUserId() != -1 || status.getUserMentionEntities().length > 0)) {
                 return false;
             }
         }
