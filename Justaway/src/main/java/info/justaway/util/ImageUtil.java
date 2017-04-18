@@ -3,12 +3,14 @@ package info.justaway.util;
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Space;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
@@ -18,6 +20,7 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import java.util.ArrayList;
 
 import info.justaway.JustawayApplication;
+import info.justaway.R;
 import info.justaway.ScaleImageActivity;
 import info.justaway.VideoActivity;
 import info.justaway.display.FadeInRoundedBitmapDisplayer;
@@ -96,10 +99,12 @@ public class ImageUtil {
             int index = 0;
             for (final String url : imageUrls) {
                 ImageView image = new ImageView(context);
-                image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 LinearLayout.LayoutParams layoutParams =
-                        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 240, 1.0f);
-                if (imageUrls.size() > 1) {
+                        new LinearLayout.LayoutParams(0, 400, 1.0f);
+
+                if (imageUrls.size() == 1) {
+                    layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+                } else {
                     if (index == 0) {
                         layoutParams.setMargins(0, 0, 5, 0);
                     } else if (index == imageUrls.size() - 1) {
@@ -109,13 +114,24 @@ public class ImageUtil {
                     }
                 }
 
-                //layoutParams.gravity = Gravity.CENTER_VERTICAL;
-                //image.setAdjustViewBounds(true);
-                image.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                if (imageUrls.size() > 1) {
-                    image.setMaxWidth(200);
+                if (imageUrls.size() > 3) {
+                    image.setAdjustViewBounds(true);
+                    image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                } else {
+                    image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 }
-                viewGroup.addView(image, layoutParams);
+
+                if (imageUrls.size() == 1) {
+                    Space space1 = new Space(context);
+                    Space space2 = new Space(context);
+                    LinearLayout.LayoutParams dummyParams =
+                            new LinearLayout.LayoutParams(20, 280, 0.1f);
+                    viewGroup.addView(space1, dummyParams);
+                    viewGroup.addView(image, layoutParams);
+                    viewGroup.addView(space2, dummyParams);
+                } else {
+                    viewGroup.addView(image, layoutParams);
+                }
                 displayImage(url, image);
 
                 if (videoUrl.isEmpty()) {
@@ -151,5 +167,11 @@ public class ImageUtil {
             wrapperViewGroup.setVisibility(View.GONE);
         }
         play.setVisibility(videoUrl.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private static int getDp(Context context, int sizeInDp) {
+        float scale = context.getResources().getDisplayMetrics().density;
+        int dpAsPixels = (int) (sizeInDp * scale + 0.5f);
+        return dpAsPixels;
     }
 }

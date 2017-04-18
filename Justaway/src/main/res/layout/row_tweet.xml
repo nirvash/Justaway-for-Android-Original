@@ -159,14 +159,14 @@
 
         <FrameLayout
             android:id="@+id/quoted_images_container_wrapper"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/quoted_status"
             android:layout_marginBottom="4dp"
             android:layout_marginTop="10dp">
             <LinearLayout
                 android:id="@+id/quoted_images_container"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"/>
             <info.justaway.widget.FontelloTextView
@@ -183,7 +183,7 @@
 
     <FrameLayout
         android:id="@+id/images_container_wrapper"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/quoted_tweet"
         android:layout_toRightOf="@id/icon"
@@ -191,7 +191,7 @@
         android:layout_marginTop="10dp">
         <LinearLayout
             android:id="@+id/images_container"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"/>
         <info.justaway.widget.FontelloTextView
