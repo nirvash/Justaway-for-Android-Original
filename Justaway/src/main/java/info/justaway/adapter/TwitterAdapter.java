@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.LongSparseArray;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
@@ -431,6 +432,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
         long userId = AccessTokenManager.getUserId();
 
+        holder.mStatus.setVisibility(View.VISIBLE);
         holder.mDoRetweet.setVisibility(View.GONE);
         holder.mDoFav.setVisibility(View.GONE);
         holder.mRetweetCount.setVisibility(View.GONE);
@@ -659,8 +661,12 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         } else {
             statusString = StatusUtil.getExpandedText(status);
         }
-        holder.mStatus.setText(StatusUtil.generateUnderline(statusString, getContext()));
-        holder.mStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
+        if (TextUtils.isEmpty(statusString)) {
+            holder.mStatus.setVisibility(View.GONE);
+        } else {
+            holder.mStatus.setText(StatusUtil.generateUnderline(statusString, getContext()));
+            holder.mStatus.setOnTouchListener(new MutableLinkMovementMethod.OnTouchListener());
+        }
 
         // 引用ツイート
         Status quotedStatus = status.getQuotedStatus();
