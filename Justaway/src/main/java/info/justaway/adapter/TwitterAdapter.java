@@ -614,7 +614,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                     holder.mRetweetIcon.setVisibility(View.VISIBLE);
                     ImageUtil.displayRoundedImage(retweet.getUser().getProfileImageURL(), holder.mRetweetIcon);
                 }
-                holder.mRetweetBy.setText("RT by " + retweet.getUser().getName() + " @" + retweet.getUser().getScreenName());
+                holder.mRetweetBy.setText(retweet.getUser().getName() + " @" + retweet.getUser().getScreenName());
                 holder.mActionContainer.setVisibility(View.GONE);
                 holder.mMenuAndViaContainer.setVisibility(View.VISIBLE);
                 holder.mRetweetContainer.setVisibility(View.VISIBLE);

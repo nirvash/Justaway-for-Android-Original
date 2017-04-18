@@ -122,13 +122,11 @@ public class ImageUtil {
                 }
 
                 if (imageUrls.size() == 1) {
-                    Space space1 = new Space(context);
-                    Space space2 = new Space(context);
+                    Space space = new Space(context);
                     LinearLayout.LayoutParams dummyParams =
-                            new LinearLayout.LayoutParams(20, 280, 0.1f);
-                    viewGroup.addView(space1, dummyParams);
+                            new LinearLayout.LayoutParams(20, 280, 0.15f);
                     viewGroup.addView(image, layoutParams);
-                    viewGroup.addView(space2, dummyParams);
+                    viewGroup.addView(space, dummyParams);
                 } else {
                     viewGroup.addView(image, layoutParams);
                 }
