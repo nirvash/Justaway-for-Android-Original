@@ -1,18 +1,17 @@
 package info.justaway.util;
 
-import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
 
+import com.makeramen.roundedimageview.RoundedImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
@@ -20,7 +19,6 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import java.util.ArrayList;
 
 import info.justaway.JustawayApplication;
-import info.justaway.R;
 import info.justaway.ScaleImageActivity;
 import info.justaway.VideoActivity;
 import info.justaway.display.FadeInRoundedBitmapDisplayer;
@@ -67,7 +65,7 @@ public class ImageUtil {
                         .cacheInMemory(true)
                         .cacheOnDisc(true)
                         .resetViewBeforeLoading(true)
-                        .displayer(new FadeInRoundedBitmapDisplayer(5))
+                        .displayer(new FadeInRoundedBitmapDisplayer(15))
                         .build();
             }
             ImageLoader.getInstance().displayImage(url, view, sRoundedDisplayImageOptions);
@@ -100,7 +98,10 @@ public class ImageUtil {
             viewGroup.removeAllViews();
             int index = 0;
             for (final String url : imageUrls) {
-                ImageView image = new ImageView(context);
+                RoundedImageView image = new RoundedImageView(context);
+                image.setCornerRadius(25.0f);
+                image.setBorderWidth(2.0f);
+                image.setBorderColor(Color.DKGRAY);
                 LinearLayout.LayoutParams layoutParams =
                         new LinearLayout.LayoutParams(0, imageHeight, 1.0f);
 
@@ -128,11 +129,6 @@ public class ImageUtil {
                     } else {
                         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     }
-                }
-                if (!viaGranblueFantasy) {
-                    image.setBackgroundColor(Color.DKGRAY);
-                    image.setPadding(0, 0, 3, 3);
-                    image.setCropToPadding(true);
                 }
 
                 if (imageUrls.size() == 1) {
