@@ -241,6 +241,26 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
         mListView.postDelayed(mRender, 250);
     }
 
+    private void scrollFinish() {
+        if (mListView == null) {
+            return;
+        }
+        mListView.removeCallbacks(mScrollFinish);
+        mListView.postDelayed(mScrollFinish, 250);
+    }
+
+    private Runnable mScrollFinish = new Runnable() {
+        @Override
+        public void run() {
+            mScrolling = false;
+            if (mStackRows.size() > 0) {
+                showStack();
+            } else if (isTop()) {
+                EventBus.getDefault().post(new GoToTopEvent());
+            }
+        }
+    };
+
     /**
      * ストリーミングAPIからツイートやメッセージを受信した時の処理
      * 1. 表示スべき内容かチェックし、不適切な場合はスルーする
@@ -271,15 +291,11 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
         public void onScrollStateChanged(AbsListView view, int scrollState) {
             switch (scrollState) {
                 case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                    mScrolling = false;
-                    if (mStackRows.size() > 0) {
-                        showStack();
-                    } else if (isTop()) {
-                        EventBus.getDefault().post(new GoToTopEvent());
-                    }
+                    scrollFinish();
                     break;
                 case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
                 case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
+                    mListView.removeCallbacks(mScrollFinish);
                     mScrolling = true;
                     break;
             }
