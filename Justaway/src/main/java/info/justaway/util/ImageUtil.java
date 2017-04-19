@@ -117,8 +117,11 @@ public class ImageUtil {
                 }
 
                 if (imageUrls.size() > 3) {
+                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    image.setMaxHeight(imageHeight);
                     image.setAdjustViewBounds(true);
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    layoutParams.gravity = Gravity.CENTER_VERTICAL;
                 } else {
                     if (viaGranblueFantasy) {
                         image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
