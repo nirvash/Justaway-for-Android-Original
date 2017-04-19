@@ -289,4 +289,9 @@ public class StatusUtil {
         Matcher m = GRANBLUE_FANTASY_ID_PATTERN.matcher(textFiltered);
         return m.find();
     }
+
+    public static boolean viaGranblueFantasy(Status status) {
+        String client = StatusUtil.getClientName(status.getSource());
+        return "グランブルー ファンタジー".equals(client);
+    }
 }

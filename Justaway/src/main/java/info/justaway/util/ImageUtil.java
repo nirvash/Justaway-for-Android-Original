@@ -94,13 +94,15 @@ public class ImageUtil {
             viewGroup.setVisibility(View.INVISIBLE);
             wrapperViewGroup.setVisibility(View.INVISIBLE);
 
+            boolean viaGranblueFantasy = StatusUtil.viaGranblueFantasy(status);
+            int imageHeight = viaGranblueFantasy ? 300 : 400;
             // 画像を貼るスペースをクリア
             viewGroup.removeAllViews();
             int index = 0;
             for (final String url : imageUrls) {
                 ImageView image = new ImageView(context);
                 LinearLayout.LayoutParams layoutParams =
-                        new LinearLayout.LayoutParams(0, 400, 1.0f);
+                        new LinearLayout.LayoutParams(0, imageHeight, 1.0f);
 
                 if (imageUrls.size() == 1) {
                     layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
@@ -118,13 +120,17 @@ public class ImageUtil {
                     image.setAdjustViewBounds(true);
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 } else {
-                    image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    if (viaGranblueFantasy) {
+                        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    } else {
+                        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    }
                 }
 
                 if (imageUrls.size() == 1) {
                     Space space = new Space(context);
                     LinearLayout.LayoutParams dummyParams =
-                            new LinearLayout.LayoutParams(20, 280, 0.15f);
+                            new LinearLayout.LayoutParams(20, imageHeight, 0.15f);
                     viewGroup.addView(image, layoutParams);
                     viewGroup.addView(space, dummyParams);
                 } else {
