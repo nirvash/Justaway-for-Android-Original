@@ -119,6 +119,11 @@ public class StatusUtil {
         Matcher m = TWITTER_PATTERN.matcher(text);
         text = m.replaceAll("");
 
+        // 余分な最後の改行を削除
+        Pattern p = Pattern.compile("\\n$");
+        m = p.matcher(text);
+        text = m.replaceAll("");
+
         return text;
     }
 
@@ -283,5 +288,10 @@ public class StatusUtil {
 
         Matcher m = GRANBLUE_FANTASY_ID_PATTERN.matcher(textFiltered);
         return m.find();
+    }
+
+    public static boolean viaGranblueFantasy(Status status) {
+        String client = StatusUtil.getClientName(status.getSource());
+        return "グランブルー ファンタジー".equals(client);
     }
 }
