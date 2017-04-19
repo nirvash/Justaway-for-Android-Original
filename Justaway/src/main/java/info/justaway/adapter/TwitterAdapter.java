@@ -592,7 +592,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             holder.mActionByScreenName.setText("@" + favorite.getScreenName());
             holder.mRetweetContainer.setVisibility(View.GONE);
             holder.mMenuAndViaContainer.setVisibility(View.VISIBLE);
-            holder.mActionContainer.setVisibility(View.VISIBLE);
+            holder.mActionContainer.setVisibility(View.GONE); // いらない
         }
 
         // RTの場合
@@ -622,17 +622,16 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         } else {
 
             // 自分へのリプ
-            if (false && StatusUtil.isMentionForMe(status)) { // この表示要らない
+            if (StatusUtil.isMentionForMe(status)) { // この表示要らない
                 holder.mActionIcon.setText(R.string.fontello_at);
                 holder.mActionIcon.setTextColor(ContextCompat.getColor(mContext, R.color.holo_red_light));
                 holder.mActionByDisplayName.setText(status.getUser().getName());
                 holder.mActionByScreenName.setText("@" + status.getUser().getScreenName());
-                holder.mActionContainer.setVisibility(View.VISIBLE);
-                holder.mRetweetContainer.setVisibility(View.GONE);
+                holder.mActionContainer.setVisibility(View.GONE); // いらない
             } else {
                 holder.mActionContainer.setVisibility(View.GONE);
-                holder.mRetweetContainer.setVisibility(View.GONE);
             }
+            holder.mRetweetContainer.setVisibility(View.GONE);
             holder.mMenuAndViaContainer.setVisibility(View.VISIBLE);
         }
 
