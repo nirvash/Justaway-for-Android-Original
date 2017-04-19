@@ -129,6 +129,11 @@ public class ImageUtil {
                         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     }
                 }
+                if (!viaGranblueFantasy) {
+                    image.setBackgroundColor(Color.DKGRAY);
+                    image.setPadding(0, 0, 3, 3);
+                    image.setCropToPadding(true);
+                }
 
                 if (imageUrls.size() == 1) {
                     Space space = new Space(context);
