@@ -553,6 +553,7 @@ public class MainActivity extends FragmentActivity {
                 button.setTag(position++);
                 button.setOnClickListener(mMenuOnClickListener);
                 button.setOnLongClickListener(mMenuOnLongClickListener);
+                button.setTag(R.layout.activity_main, tab.id.intValue());
                 mTabMenus.addView(button);
                 if (tab.id == TabManager.TIMELINE_TAB_ID) {
                     mMainPagerAdapter.addTab(TimelineFragment.class, null, tab.getName(), tab.id);
@@ -594,6 +595,13 @@ public class MainActivity extends FragmentActivity {
     private View.OnClickListener mMenuOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+            try {
+                int tabId = (Integer) view.getTag(R.layout.activity_main);
+                NotificationService.clear(tabId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             int position = (Integer) view.getTag();
             BaseFragment f = mMainPagerAdapter.findFragmentByPosition(position);
             if (f == null) {
@@ -619,6 +627,13 @@ public class MainActivity extends FragmentActivity {
     private View.OnLongClickListener mMenuOnLongClickListener = new View.OnLongClickListener() {
         @Override
         public boolean onLongClick(View view) {
+            try {
+                int tabId = (Integer) view.getTag(R.layout.activity_main);
+                NotificationService.clear(tabId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             int position = (Integer) view.getTag();
             BaseFragment f = mMainPagerAdapter.findFragmentByPosition(position);
             if (f == null) {
@@ -697,6 +712,13 @@ public class MainActivity extends FragmentActivity {
         Button button = (Button) tab_menus.getChildAt(mViewPager.getCurrentItem());
         if (button != null) {
             ThemeUtil.setThemeTextColor(button, R.attr.menu_text_color);
+
+            try {
+                int tabId = (Integer) button.getTag(R.layout.activity_main);
+                NotificationService.clear(tabId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

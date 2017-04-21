@@ -19,6 +19,7 @@ import de.greenrobot.event.EventBus;
 import info.justaway.event.model.NotificationEvent;
 import info.justaway.model.AccessTokenManager;
 import info.justaway.model.Row;
+import info.justaway.model.TabManager;
 import twitter4j.Status;
 import twitter4j.UserMentionEntity;
 
@@ -91,6 +92,18 @@ public class NotificationService extends Service {
         super.onDestroy();
     }
 
+    static void clearAll() {
+        JustawayApplication application = JustawayApplication.getApplication();
+        NotificationManager manager = (NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancelAll();
+    }
+
+    public static void clear(int tabId) {
+        JustawayApplication application = JustawayApplication.getApplication();
+        NotificationManager manager = (NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancel(tabId);
+    }
+
     @SuppressWarnings("UnusedDeclaration")
     public void onEvent(NotificationEvent event) {
         SharedPreferences preferences = getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -117,7 +130,7 @@ public class NotificationService extends Service {
             text = row.getMessage().getText();
             ticker = text;
             smallIcon = R.drawable.ic_notification_mail;
-            id = row.getMessage().getId();
+            id = TabManager.DIRECT_MESSAGES_TAB_ID;
         } else if (status != null && row.isFavorite()) {
             if (!preferences.getBoolean("notification_favorite_on", true)) {
                 return;
@@ -127,7 +140,7 @@ public class NotificationService extends Service {
             text = getString(R.string.notification_favorite) + status.getText();
             ticker = title + getString(R.string.notification_favorite_ticker) + status.getText();
             smallIcon = R.drawable.ic_notification_star;
-            id = status.getId();
+            id = TabManager.FAVORITES_TAB_ID;
         } else if (status != null && status.getInReplyToUserId() == userId) {
             if (!preferences.getBoolean("notification_reply_on", true)) {
                 return;
@@ -137,7 +150,7 @@ public class NotificationService extends Service {
             text = status.getText();
             ticker = text;
             smallIcon = R.drawable.ic_notification_at;
-            id = status.getId();
+            id = TabManager.INTERACTIONS_TAB_ID;
         } else if (retweet != null && retweet.getUser().getId() == userId) {
             if (!preferences.getBoolean("notification_retweet_on", true)) {
                 return;
@@ -147,7 +160,7 @@ public class NotificationService extends Service {
             text = getString(R.string.notification_retweet) + status.getText();
             ticker = title + getString(R.string.notification_retweet_ticker) + status.getText();
             smallIcon = R.drawable.ic_notification_rt;
-            id = status.getId();
+            id = TabManager.TIMELINE_TAB_ID;
         } else {
             return;
         }
@@ -231,6 +244,6 @@ public class NotificationService extends Service {
         }
 
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(((int) (id > 0 ? id : 1)), builder.build());
+        manager.notify((int) id, builder.build());
     }
 }
