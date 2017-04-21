@@ -134,10 +134,11 @@ public class Row {
     public boolean isFavorited() {
         if (this.favorited == FAV_STATUS) {
             if (this.status.isRetweet()) {
-                return this.status.getRetweetedStatus().isFavorited();
-            } else {
-                return this.status.isFavorited();
+                if (this.status.getRetweetedStatus().isFavorited()) {
+                    return true;
+                }
             }
+            return this.status.isFavorited();
         } else {
             return this.favorited == FAV_FAVORITE;
         }
@@ -146,6 +147,9 @@ public class Row {
     public boolean isRetweeted() {
         if (this.retweeeted == RT_STATUS) {
             if (this.status.isRetweet() && this.status.getUser().getId() == AccessTokenManager.getUserId()) {
+                return true;
+            }
+            if (this.status.getRetweetedStatus() != null && this.status.getRetweetedStatus().isRetweeted()) {
                 return true;
             }
             return this.status.isRetweeted();

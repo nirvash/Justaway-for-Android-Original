@@ -217,7 +217,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
             if (autoScroll) {
                 mListView.setSelection(0);
             } else {
-                // 少しでもスクロールさせている時は画面を動かさない様にスクロー位置を復元する
+                // 少しでもスクロールさせている時は画面を動かさない様にスクロール位置を復元する
                 mListView.setSelectionFromTop(position + count, y);
                 // 未読の新規ツイートをチラ見せ
                 if (position == 0 && y == 0) {

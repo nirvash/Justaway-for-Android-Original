@@ -51,7 +51,8 @@ public class UserIconManager {
                 return;
         }
         if (BasicSettings.getUserIconRoundedOn()) {
-            ImageUtil.displayRoundedImage(url, view);
+//            ImageUtil.displayRoundedImage(url, view);
+            ImageUtil.displayImage(url, view);
         } else {
             ImageUtil.displayImage(url, view);
         }
