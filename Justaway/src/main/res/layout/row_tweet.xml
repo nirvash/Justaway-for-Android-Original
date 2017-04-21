@@ -34,6 +34,17 @@
             android:textStyle="bold"
             tools:text="Justaway Factory"/>
 
+        <TextView
+            android:id="@+id/action_by_screen_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:textColor="#666666"
+            android:textSize="10sp"
+            android:layout_alignBaseline="@id/action_by_display_name"
+            tools:ignore="SmallSp"
+            tools:text="\@justawayfactory" />
     </RelativeLayout>
 
 
@@ -346,17 +357,7 @@
             tools:text="2014/01/23 15:14:30"/>
     </RelativeLayout>
 
-    <TextView
-        android:id="@+id/action_by_screen_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp"
-        android:textColor="#666666"
-        android:textSize="10sp"
-        tools:ignore="SmallSp"
-        tools:text="\@justawayfactory" />
+
 
 
 </RelativeLayout>
