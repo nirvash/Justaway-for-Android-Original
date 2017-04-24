@@ -30,6 +30,7 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
     private int mIntrinsicHeight;
 
     private float mMinScale;
+    private float mDefaultScale;
 
     private float mPrevDistance;
     private boolean mIsScaling;
@@ -120,6 +121,7 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
         mMatrix.reset();
         int r_norm = r - l;
         float scale = (float) r_norm / (float) mIntrinsicWidth;
+        scale = Math.min(scale, 6.0f); // 拡大されすぎるのを防止
         // Log.d("justaway", "[setFrame] l:" + l + " t:" + t + " r:" + r + " b:" + b + " width:" + mWidth + " height:" + mHeight + " intrinsicWidth:" + mIntrinsicWidth + " scale:" + scale);
 
         int paddingHeight;
@@ -139,6 +141,7 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
         mMatrix.postTranslate(paddingWidth, paddingHeight);
 
         setImageMatrix(mMatrix);
+        mDefaultScale = scale;
 
         if (!mIsInitializedScaling) {
             mIsInitializedScaling = true;
@@ -148,8 +151,9 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
 
         cutting();
         boolean isChanges = super.setFrame(l, t, r, b);
-        if (mMinScale != scale) {
-            mMinScale = scale;
+        float minScale = scale / 2.0f; // デフォルトの半分を最小スケールとする
+        if (mMinScale != minScale) {
+            mMinScale = minScale;
             isChanges = true;
         }
         return isChanges;
@@ -173,12 +177,12 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
     }
 
     protected void maxZoomTo(int x, int y) {
-        if (mMinScale != getScale() && (getScale() - mMinScale) > 0.1f) {
+        if (mDefaultScale != getScale() && Math.abs(getScale() - mDefaultScale) > 0.1f) {
             // threshold 0.1f
-            float scale = mMinScale / getScale();
+            float scale = mDefaultScale / getScale();
             zoomTo(scale, x, y);
         } else {
-            float scale = 2f / getScale();
+            float scale = 4f / getScale();
             zoomTo(scale, x, y);
         }
     }
@@ -259,6 +263,9 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
                 if (touchCount >= 2) {
                     mPrevDistance = distance(event.getX(0), event.getX(1), event.getY(0), event.getY(1));
                     mIsScaling = true;
+                    // ２点の中間をフォーカス位置とする
+                    mPrevMoveX = (int) ((event.getX(0) + event.getX(1)) / 2.0f);
+                    mPrevMoveY = (int) ((event.getY(0) + event.getY(1)) / 2.0f);
                 } else {
                     mPrevMoveX = (int) event.getX();
                     mPrevMoveY = (int) event.getY();
@@ -271,6 +278,15 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
                     scale += 1;
                     scale = scale * scale;
                     zoomTo(scale, mWidth / 2, mHeight / 2);
+
+                    // ２点の中間をフォーカス位置とする
+                    int px = (int) ((event.getX(0) + event.getX(1)) / 2.0f);
+                    int py = (int) ((event.getY(0) + event.getY(1)) / 2.0f);
+                    int distanceX = mPrevMoveX - px;
+                    int distanceY = mPrevMoveY - py;
+                    mPrevMoveX = px;
+                    mPrevMoveY = py;
+                    mMatrix.postTranslate(-distanceX, -distanceY);
                     cutting();
                 } else {
                     int distanceX = mPrevMoveX - (int) event.getX();
@@ -282,9 +298,22 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                mIsScaling = false;
+                break;
+
             case MotionEvent.ACTION_POINTER_UP:
-                if (event.getPointerCount() <= 1) {
+                // 1点タッチになったらスケール解除
+                if (touchCount <= 2) {
                     mIsScaling = false;
+                    for (int i=0; i<touchCount; i++) {
+                        int id = event.findPointerIndex(i);
+                        if (event.getActionIndex() != id) {
+                            // 残った指の座標を前回座標とする
+                            mPrevMoveX = (int) event.getX(id);
+                            mPrevMoveY = (int) event.getY(id);
+                            break;
+                        }
+                    }
                 }
                 break;
         }
