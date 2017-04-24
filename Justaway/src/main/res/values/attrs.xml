@@ -14,8 +14,4 @@
         <attr name="text_color" format="color"/>
         <attr name="button_stateful" format="reference"/>
     </declare-styleable>
-
-    <declare-styleable name="FontelloTextView">
-        <attr name="font" format="string" />
-    </declare-styleable>
 </resources>

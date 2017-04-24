@@ -544,7 +544,7 @@ public class MainActivity extends FragmentActivity {
 
             int position = 0;
             for (TabManager.Tab tab : tabs) {
-                FontelloButton button = new FontelloButton(this);
+                Button button = new FontelloButton(this);
                 button.setLayoutParams(layoutParams);
                 button.setText(tab.getIcon());
                 button.setTextSize(22);
@@ -568,7 +568,6 @@ public class MainActivity extends FragmentActivity {
                     args.putString("searchWord", tab.name);
                     mMainPagerAdapter.addTab(SearchFragment.class, args, tab.getName(), tab.id, tab.name);
                 } else if (tab.id == TabManager.FILTER_TAB_ID) {
-                    button.enableExFont(true);
                     mMainPagerAdapter.addTab(FilterFragment.class, null, tab.getName(), tab.id, tab.name);
                 } else {
                     Bundle args = new Bundle();

@@ -32,10 +32,4 @@ public class FontelloButton extends Button {
     private void init() {
         setTypeface(JustawayApplication.getFontello());
     }
-
-    public void enableExFont(boolean enable) {
-        if (enable) {
-            setTypeface(JustawayApplication.getFontelloEx());
-        }
-    }
 }
