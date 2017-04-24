@@ -214,14 +214,16 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
                 EventBus.getDefault().post(new NewRecordEvent(getTabId(), getSearchWord(), autoScroll));
             }
 
+            // スクロール位置を復元する
+            mListView.setSelectionFromTop(position + count, y);
+
             if (autoScroll) {
-                mListView.setSelection(0);
+                // リストの先頭を表示していた場合は追加された項目をスクロールしてみせる
+                mListView.smoothScrollToPositionFromTop(position, 0, 400);
             } else {
-                // 少しでもスクロールさせている時は画面を動かさない様にスクロール位置を復元する
-                mListView.setSelectionFromTop(position + count, y);
-                // 未読の新規ツイートをチラ見せ
+                // 沢山追加されたときは未読の新規ツイートをチラ見せ
                 if (position == 0 && y == 0) {
-                    // mListView.smoothScrollToPositionFromTop(position + count, 120);
+                    mListView.smoothScrollToPositionFromTop(position + count, 120);
                 }
             }
         }
