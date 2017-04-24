@@ -83,7 +83,7 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
             mIntrinsicHeight = d.getIntrinsicHeight();
             setOnTouchListener(this);
         }
-        mDetector = new GestureDetector(mContext, new GestureDetector.SimpleOnGestureListener() {
+        GestureDetector.SimpleOnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
                 maxZoomTo((int) e.getX(), (int) e.getY());
@@ -92,11 +92,11 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
             }
 
             @Override
-            public boolean onSingleTapUp(MotionEvent e) {
+            public boolean onSingleTapConfirmed(MotionEvent e) {
                 if (mActivity != null) {
                     mActivity.finish();
                 }
-                return super.onSingleTapUp(e);
+                return super.onSingleTapConfirmed(e);
             }
 
             @Override
@@ -106,7 +106,9 @@ public class ScaleImageView extends ImageView implements OnTouchListener {
                 }
                 super.onLongPress(e);
             }
-        });
+        };
+        mDetector = new GestureDetector(mContext, listener);
+        mDetector.setOnDoubleTapListener(listener);
 
     }
 
