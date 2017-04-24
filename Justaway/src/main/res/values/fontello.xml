@@ -28,5 +28,7 @@
     <string name="fontello_menu" translatable="false">三</string>
     <string name="fontello_cancel" translatable="false">☓</string>
     <string name="fontello_play" translatable="false">進</string>
+    <string name="fontello_filter" translatable="false">目</string>
+    <string name="fontello_fav" translatable="false">💛</string>
 
 </resources>

@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "fontello",
   "css_prefix_text": "icon-",
   "css_use_suffix": false,
   "hinting": true,
@@ -173,6 +173,24 @@
       "css": "sdd",
       "code": 37782,
       "src": "websymbols"
+    },
+    {
+      "uid": "d73eceadda1f594cec0536087539afbf",
+      "css": "heart",
+      "code": 128155,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "acf41aa4018e58d49525665469e35665",
+      "css": "thumbs-up",
+      "code": 98,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "frauy9fser6zk9n5ih3rdpz7zzfjbrvu",
+      "css": "eye",
+      "code": 30446,
+      "src": "modernpics"
     }
   ]
 }

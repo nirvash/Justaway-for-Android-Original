@@ -120,7 +120,7 @@ public class TabManager {
             } else if (id <= SEARCH_TAB_ID) {
                 return R.string.fontello_search;
             } else if (id <= FILTER_TAB_ID) {
-                return R.string.fontello_tag;
+                return R.string.fontello_filter;
             } else {
                 return R.string.fontello_list;
             }
