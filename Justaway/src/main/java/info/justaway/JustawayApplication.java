@@ -15,6 +15,7 @@ public class JustawayApplication extends Application {
 
     private static JustawayApplication sApplication;
     private static Typeface sFontello;
+    private static Typeface sFontelloEx;
 
     @Override
     public void onCreate() {
@@ -43,6 +44,7 @@ public class JustawayApplication extends Application {
         Relationship.init();
 
         sFontello = Typeface.createFromAsset(getAssets(), "fontello.ttf");
+        sFontelloEx = Typeface.createFromAsset(getAssets(), "fontello2.ttf");
 
         // 例外発生時の処理を指定（スタックトレースを保存）
         if (BuildConfig.DEBUG) {
@@ -88,4 +90,9 @@ public class JustawayApplication extends Application {
     public static Typeface getFontello() {
         return sFontello;
     }
+
+    public static Typeface getFontelloEx() {
+        return sFontelloEx;
+    }
+
 }
