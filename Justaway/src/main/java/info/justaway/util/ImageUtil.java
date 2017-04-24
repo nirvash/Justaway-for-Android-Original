@@ -16,7 +16,6 @@ import com.makeramen.roundedimageview.RoundedImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
@@ -56,8 +55,41 @@ public class ImageUtil {
         view.setTag(url);
         ImageLoader.getInstance().displayImage(url, view);
     }
+    public static void displayImageForCrop(String url, ImageView view, final Context context) {
+        String tag = (String) view.getTag();
+        if (tag != null && tag.equals(url)) {
+            return;
+        }
+        view.setTag(url);
 
-    public static void displayImage(String url, ImageView view, boolean fitByAspect) {
+        ImageLoadingListener listener = new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap image) {
+/*
+                ImageView imageView = (ImageView) view;
+                int width = image.getWidth();
+                int height = image.getHeight();
+
+                Picasso.with(context).
+
+                for (int i=0, size = Math.min(faces.size(), 1); i < size; i++) {
+                    int fWidth = (int) face.getWidth();
+                    int fHeight = (int) face.getHeight();
+
+                    imageView.setScaleType(ImageView.ScaleType.MATRIX);
+                    Matrix matrix = new Matrix();
+                    float scale = Math.min(fWidth / width, fHeight / height);
+                    matrix.postScale(scale, scale);
+                    matrix.postTranslate((fWidth - width * scale) / 2, (fHeight - height * scale) / 2);
+                    imageView.setImageMatrix(matrix);
+                }
+*/
+            }
+        };
+        ImageLoader.getInstance().displayImage(url, view, listener);
+    }
+
+    public static void displayImage(String url, ImageView view, boolean cropByAspect) {
         String tag = (String) view.getTag();
         if (tag != null && tag.equals(url)) {
             return;
@@ -78,7 +110,7 @@ public class ImageUtil {
                 }
             }
         };
-        ImageLoader.getInstance().displayImage(url, view, fitByAspect ? listener : null);
+        ImageLoader.getInstance().displayImage(url, view, cropByAspect ? listener : null);
     }
 
 
@@ -128,6 +160,7 @@ public class ImageUtil {
             int index = 0;
             for (final String url : imageUrls) {
                 RoundedImageView image = new RoundedImageView(context);
+                image.setMinimumHeight(150); // 極端に小さい画像対応
                 image.setCornerRadius(25.0f);
                 image.setBorderWidth(2.0f);
                 image.setBorderColor(Color.DKGRAY);
@@ -172,7 +205,11 @@ public class ImageUtil {
                 } else {
                     viewGroup.addView(image, layoutParams);
                 }
-                displayImage(url, image, fitByAspect);
+                if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
+                    displayImageForCrop(url, image, context);
+                } else {
+                    displayImage(url, image, fitByAspect);
+                }
 
                 if (videoUrl.isEmpty()) {
                     // 画像タップで拡大表示（ピンチイン・ピンチアウトいつかちゃんとやる）
