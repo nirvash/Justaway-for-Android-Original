@@ -2,6 +2,7 @@ package info.justaway.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
@@ -15,6 +16,9 @@ import com.makeramen.roundedimageview.RoundedImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.assist.ImageLoadingListener;
+import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
 import java.util.ArrayList;
 
@@ -52,6 +56,31 @@ public class ImageUtil {
         view.setTag(url);
         ImageLoader.getInstance().displayImage(url, view);
     }
+
+    public static void displayImage(String url, ImageView view, boolean fitByAspect) {
+        String tag = (String) view.getTag();
+        if (tag != null && tag.equals(url)) {
+            return;
+        }
+        view.setTag(url);
+
+        ImageLoadingListener listener = new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                ImageView imageView = (ImageView) view;
+
+                float w = loadedImage.getWidth();
+                float h = loadedImage.getHeight();
+                if (h > 0 && w/h > 3.9f/3.0f) {
+                    // 横長の時はクロップにする
+                    imageView.setAdjustViewBounds(false);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                }
+            }
+        };
+        ImageLoader.getInstance().displayImage(url, view, fitByAspect ? listener : null);
+    }
+
 
     public static void displayRoundedImage(String url, ImageView view) {
         String tag = (String) view.getTag();
@@ -117,12 +146,15 @@ public class ImageUtil {
                     }
                 }
 
+                boolean fitByAspect = false;
+
                 if (imageUrls.size() > 3) {
                     layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                     image.setMaxHeight(imageHeight);
                     image.setAdjustViewBounds(true);
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     layoutParams.gravity = Gravity.CENTER_VERTICAL;
+                    fitByAspect = true;
                 } else {
                     if (viaGranblueFantasy) {
                         image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -140,7 +172,7 @@ public class ImageUtil {
                 } else {
                     viewGroup.addView(image, layoutParams);
                 }
-                displayImage(url, image);
+                displayImage(url, image, fitByAspect);
 
                 if (videoUrl.isEmpty()) {
                     // 画像タップで拡大表示（ピンチイン・ピンチアウトいつかちゃんとやる）
