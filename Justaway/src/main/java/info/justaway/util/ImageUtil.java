@@ -72,8 +72,9 @@ public class ImageUtil {
                     float h = image.getHeight();
                     if (h > 0 && h / w > 3.9f / 3.0f) {
                         // ソース画像の高さを縮小してセンターを上に移動させる
-                        image.setHeight( (int) (h * 0.6f));
-                        imageView.setImageBitmap(image);
+                        // 渡された Bitmap はメモリキャッシュに乗っているので変更してはダメ
+                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int)w, (int)(h * 0.6f));
+                        imageView.setImageBitmap(resized);
                     }
                 }
             }
