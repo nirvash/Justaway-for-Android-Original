@@ -65,25 +65,17 @@ public class ImageUtil {
         ImageLoadingListener listener = new SimpleImageLoadingListener() {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap image) {
-/*
                 ImageView imageView = (ImageView) view;
-                int width = image.getWidth();
-                int height = image.getHeight();
-
-                Picasso.with(context).
-
-                for (int i=0, size = Math.min(faces.size(), 1); i < size; i++) {
-                    int fWidth = (int) face.getWidth();
-                    int fHeight = (int) face.getHeight();
-
-                    imageView.setScaleType(ImageView.ScaleType.MATRIX);
-                    Matrix matrix = new Matrix();
-                    float scale = Math.min(fWidth / width, fHeight / height);
-                    matrix.postScale(scale, scale);
-                    matrix.postTranslate((fWidth - width * scale) / 2, (fHeight - height * scale) / 2);
-                    imageView.setImageMatrix(matrix);
+                if (imageView != null) {
+                    // CROP 指定で画像が縦長の時は下を切り詰めてフォーカス位置を上にずらす
+                    float w = image.getWidth();
+                    float h = image.getHeight();
+                    if (h > 0 && h / w > 3.9f / 3.0f) {
+                        // ソース画像の高さを縮小してセンターを上に移動させる
+                        image.setHeight( (int) (h * 0.6f));
+                        imageView.setImageBitmap(image);
+                    }
                 }
-*/
             }
         };
         ImageLoader.getInstance().displayImage(url, view, listener);
