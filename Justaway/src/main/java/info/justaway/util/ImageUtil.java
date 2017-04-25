@@ -100,6 +100,7 @@ public class ImageUtil {
                     // 横長の時はクロップにする
                     imageView.setAdjustViewBounds(false);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    imageView.setMaxHeight(250);
                 }
             }
         };
@@ -172,7 +173,7 @@ public class ImageUtil {
                     }
                 }
 
-                boolean fitByAspect = false;
+                boolean cropByAspect = false;
 
                 if (imageUrls.size() > 3) {
                     layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -180,7 +181,7 @@ public class ImageUtil {
                     image.setAdjustViewBounds(true);
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     layoutParams.gravity = Gravity.CENTER_VERTICAL;
-                    fitByAspect = true;
+                    cropByAspect = true;
                 } else {
                     if (viaGranblueFantasy) {
                         image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -201,7 +202,7 @@ public class ImageUtil {
                 if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
                     displayImageForCrop(url, image, context);
                 } else {
-                    displayImage(url, image, fitByAspect);
+                    displayImage(url, image, cropByAspect);
                 }
 
                 if (videoUrl.isEmpty()) {

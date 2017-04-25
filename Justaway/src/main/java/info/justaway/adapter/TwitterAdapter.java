@@ -584,15 +584,15 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             }
         }
 
-        // favの場合
-        if (favorite != null) {
+        // 自分以外からの favの場合
+        if (favorite != null && favorite.getId() != userId) {
             holder.mActionIcon.setText(R.string.fontello_star);
             holder.mActionIcon.setTextColor(ContextCompat.getColor(mContext, R.color.holo_orange_light));
             holder.mActionByDisplayName.setText(favorite.getName());
             holder.mActionByScreenName.setText("@" + favorite.getScreenName());
             holder.mRetweetContainer.setVisibility(View.GONE);
             holder.mMenuAndViaContainer.setVisibility(View.VISIBLE);
-            holder.mActionContainer.setVisibility(View.GONE); // いらない
+            holder.mActionContainer.setVisibility(View.VISIBLE);
         }
 
         // RTの場合

@@ -45,6 +45,10 @@ public class ReactionsFragment extends BaseFragment {
     protected void taskExecute() {
         // 対応する REST API はない。
         // ストリームで受けとったものしか表示されない
+        mReloading = false;
+        mPullToRefreshLayout.setRefreshComplete();
+        mListView.setVisibility(View.VISIBLE);
+        return;
     }
 
     /**

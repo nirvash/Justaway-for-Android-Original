@@ -31,6 +31,7 @@ public class InteractionsFragment extends BaseFragment {
 
     /**
      * このタブに表示するツイートの定義
+     *
      * @param row ストリーミングAPIから受け取った情報（ツイート＋ふぁぼ）
      *            CreateFavoriteEventをキャッチしている為、ふぁぼイベントを受け取ることが出来る
      * @return trueは表示しない、falseは表示する
@@ -38,7 +39,7 @@ public class InteractionsFragment extends BaseFragment {
     @Override
     protected boolean isSkip(Row row) {
         if (row.isFavorite()) {
-            return row.getSource().getId() == AccessTokenManager.getUserId();
+            return true;
         }
         if (row.isStatus()) {
 
@@ -123,31 +124,5 @@ public class InteractionsFragment extends BaseFragment {
             }
         }
     }
-
-    /**
-     * ストリーミングAPIからふぁぼを受け取った時のイベント
-     * @param event ふぁぼイベント
-     */
-    public void onEventMainThread(StreamingCreateFavoriteEvent event) {
-        addStack(event.getRow());
-    }
-
-    /**
-     * ストリーミングAPIからあんふぁぼイベントを受信
-     * @param event ツイート
-     */
-    public void onEventMainThread(StreamingUnFavoriteEvent event) {
-        ArrayList<Integer> removePositions = mAdapter.removeStatus(event.getStatus().getId());
-        for (Integer removePosition : removePositions) {
-            if (removePosition >= 0) {
-                int visiblePosition = mListView.getFirstVisiblePosition();
-                if (visiblePosition > removePosition) {
-                    View view = mListView.getChildAt(0);
-                    int y = view != null ? view.getTop() : 0;
-                    mListView.setSelectionFromTop(visiblePosition - 1, y);
-                    break;
-                }
-            }
-        }
-    }
 }
+
