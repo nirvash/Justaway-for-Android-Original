@@ -260,4 +260,5 @@
     <string name="copy_id_success">Copy Success [%s]</string>
     <string name="title_filter">Filter</string>
     <string name="menu_rate_limit">API Limit</string>
+    <string name="title_reactions">Reactions</string>
 </resources>

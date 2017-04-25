@@ -60,6 +60,7 @@ import info.justaway.fragment.main.tab.DirectMessagesFragment;
 import info.justaway.fragment.main.tab.FavoritesFragment;
 import info.justaway.fragment.main.tab.FilterFragment;
 import info.justaway.fragment.main.tab.InteractionsFragment;
+import info.justaway.fragment.main.tab.ReactionsFragment;
 import info.justaway.fragment.main.tab.SearchFragment;
 import info.justaway.fragment.main.tab.TimelineFragment;
 import info.justaway.fragment.main.tab.UserListFragment;
@@ -563,12 +564,14 @@ public class MainActivity extends FragmentActivity {
                     mMainPagerAdapter.addTab(DirectMessagesFragment.class, null, tab.getName(), tab.id);
                 } else if (tab.id == TabManager.FAVORITES_TAB_ID) {
                     mMainPagerAdapter.addTab(FavoritesFragment.class, null, tab.getName(), tab.id);
+                } else if (tab.id == TabManager.FILTER_TAB_ID) {
+                    mMainPagerAdapter.addTab(FilterFragment.class, null, tab.getName(), tab.id, tab.name);
+                } else if (tab.id == TabManager.REACTIONS_TAB_ID) {
+                    mMainPagerAdapter.addTab(ReactionsFragment.class, null, tab.getName(), tab.id, tab.name);
                 } else if (tab.id <= TabManager.SEARCH_TAB_ID) {
                     Bundle args = new Bundle();
                     args.putString("searchWord", tab.name);
                     mMainPagerAdapter.addTab(SearchFragment.class, args, tab.getName(), tab.id, tab.name);
-                } else if (tab.id == TabManager.FILTER_TAB_ID) {
-                    mMainPagerAdapter.addTab(FilterFragment.class, null, tab.getName(), tab.id, tab.name);
                 } else {
                     Bundle args = new Bundle();
                     args.putLong("userListId", tab.id);

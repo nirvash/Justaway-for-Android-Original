@@ -257,5 +257,6 @@
     <string name="copy_id_success">コピーしました [%s]</string>
     <string name="title_filter">フィルタ</string>
     <string name="menu_rate_limit">API制限</string>
+    <string name="title_reactions">リアクション</string>
 
 </resources>
