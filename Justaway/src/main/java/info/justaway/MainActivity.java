@@ -325,6 +325,13 @@ public class MainActivity extends FragmentActivity {
             hideQuickPanel();
         }
 
+        mMainPagerAdapter.notifyDataSetChanged();
+        // 以下のように遅延させると
+        // 1. Resume した直後にドラッグを開始する
+        // 2. 下記の notifyDataSetChanged が発火する
+        // 3. タッチイベントが配信されなくなりスクロールできなくなる
+        // という問題がおきるので直に呼ぶようにしている
+/*
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -336,7 +343,7 @@ public class MainActivity extends FragmentActivity {
                 }
             }
         }, 1000);
-
+*/
         if (mSwitchAccessToken != null) {
             TwitterManager.switchAccessToken(mSwitchAccessToken);
             mSwitchAccessToken = null;

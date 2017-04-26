@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -240,7 +241,9 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
             return;
         }
         mListView.removeCallbacks(mRender);
-        mListView.postDelayed(mRender, 250);
+        if (mStackRows.size() > 0) {
+            mListView.postDelayed(mRender, 250);
+        }
     }
 
     private void scrollFinish() {
