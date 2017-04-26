@@ -47,9 +47,15 @@ public class ImageUtil {
                 .resetViewBeforeLoading(true)
                 .build();
 
+        Executor executor = DefaultConfigurationFactory.createExecutor(
+                ImageLoaderConfiguration.Builder.DEFAULT_THREAD_POOL_SIZE,
+                ImageLoaderConfiguration.Builder.DEFAULT_THREAD_PRIORITY - 2,
+                ImageLoaderConfiguration.Builder.DEFAULT_TASK_PROCESSING_TYPE);
+
         ImageLoaderConfiguration config = new ImageLoaderConfiguration
                 .Builder(JustawayApplication.getApplication())
                 .defaultDisplayImageOptions(defaultOptions)
+                .taskExecutor(executor)
                 .build();
 
         ImageLoader.getInstance().init(config);
