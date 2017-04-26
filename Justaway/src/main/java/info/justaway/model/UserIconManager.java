@@ -50,12 +50,8 @@ public class UserIconManager {
                 view.setVisibility(View.GONE);
                 return;
         }
-        if (BasicSettings.getUserIconRoundedOn()) {
-//            ImageUtil.displayRoundedImage(url, view);
-            ImageUtil.displayImage(url, view);
-        } else {
-            ImageUtil.displayImage(url, view);
-        }
+
+        ImageUtil.displayImage(url, view);
     }
 
     public static String getName(final long userId) {
@@ -72,7 +68,7 @@ public class UserIconManager {
     public static void displayUserIcon(final long userId, final ImageView view) {
         String url = sUserIconMap.get(String.valueOf(userId));
         if (url != null) {
-            ImageUtil.displayRoundedImage(url, view);
+            ImageUtil.displayImage(url, view);
             return;
         }
 

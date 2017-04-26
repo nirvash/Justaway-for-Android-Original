@@ -13,15 +13,23 @@ import android.widget.Space;
 import android.widget.TextView;
 
 import com.makeramen.roundedimageview.RoundedImageView;
+import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.DiscCacheUtil;
 import com.nostra13.universalimageloader.core.assist.ImageLoadingListener;
+import com.nostra13.universalimageloader.core.assist.MemoryCacheUtil;
+import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 import info.justaway.JustawayApplication;
+import info.justaway.R;
 import info.justaway.ScaleImageActivity;
 import info.justaway.VideoActivity;
 import info.justaway.display.FadeInRoundedBitmapDisplayer;
@@ -53,8 +61,14 @@ public class ImageUtil {
             return;
         }
         view.setTag(url);
-        ImageLoader.getInstance().displayImage(url, view);
+
+        if (displayImageOnCache(url, view, null)) {
+            return;
+        } else {
+            ImageLoader.getInstance().displayImage(url, view);
+        }
     }
+
     public static void displayImageForCrop(String url, ImageView view, final Context context) {
         String tag = (String) view.getTag();
         if (tag != null && tag.equals(url)) {
@@ -70,18 +84,26 @@ public class ImageUtil {
                     // CROP 指定で画像が縦長の時は下を切り詰めてフォーカス位置を上にずらす
                     float w = image.getWidth();
                     float h = image.getHeight();
-                    if (h > 0 && h / w > 3.9f / 3.0f) {
+                    if (h > 0 && h / w > 3.2f / 3.0f) {
                         // ソース画像の高さを縮小してセンターを上に移動させる
                         // 渡された Bitmap はメモリキャッシュに乗っているので変更してはダメ
-                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int)w, (int)(h * 0.6f));
+                        float rate = h/w > 1.5f ? 0.4f : 0.6f;
+                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int)w, (int)(h * rate));
                         imageView.setImageBitmap(resized);
                     }
                 }
             }
         };
-        ImageLoader.getInstance().displayImage(url, view, listener);
+
+        if (displayImageOnCache(url, view, listener)) {
+            return;
+        } else {
+            ImageLoader.getInstance().displayImage(url, view, listener);
+        }
     }
 
+
+    // 4枚サムネイルのとき, グラブルからの投稿のとき
     public static void displayImage(String url, ImageView view, boolean cropByAspect) {
         String tag = (String) view.getTag();
         if (tag != null && tag.equals(url)) {
@@ -89,22 +111,30 @@ public class ImageUtil {
         }
         view.setTag(url);
 
-        ImageLoadingListener listener = new SimpleImageLoadingListener() {
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                ImageView imageView = (ImageView) view;
+        ImageLoadingListener listener = null;
 
-                float w = loadedImage.getWidth();
-                float h = loadedImage.getHeight();
-                if (h > 0 && w/h > 3.9f/3.0f) {
-                    // 横長の時はクロップにする
-                    imageView.setAdjustViewBounds(false);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    imageView.setMaxHeight(250);
+        if (cropByAspect) { // 4枚サムネイルのとき
+            listener = new SimpleImageLoadingListener() {
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    ImageView imageView = (ImageView) view;
+
+                    float w = loadedImage.getWidth();
+                    float h = loadedImage.getHeight();
+                    if (h > 0 && w/h > 1.4f) {
+                        // 横長の時はクロップにする
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        // この時点ではすでに view はレイアウトされているので setMaxHeight とかは無意味？
+                    }
                 }
-            }
-        };
-        ImageLoader.getInstance().displayImage(url, view, cropByAspect ? listener : null);
+            };
+        }
+
+        if (displayImageOnCache(url, view, listener)) {
+            return;
+        } else {
+            ImageLoader.getInstance().displayImage(url, view, listener);
+        }
     }
 
 
@@ -114,6 +144,7 @@ public class ImageUtil {
             return;
         }
         view.setTag(url);
+        DisplayImageOptions options = null;
         if (BasicSettings.getUserIconRoundedOn()) {
             if (sRoundedDisplayImageOptions == null) {
                 sRoundedDisplayImageOptions = new DisplayImageOptions.Builder()
@@ -123,10 +154,38 @@ public class ImageUtil {
                         .displayer(new FadeInRoundedBitmapDisplayer(15))
                         .build();
             }
-            ImageLoader.getInstance().displayImage(url, view, sRoundedDisplayImageOptions);
-        } else {
-            ImageLoader.getInstance().displayImage(url, view);
+            options = sRoundedDisplayImageOptions;
         }
+
+        if (displayImageOnCache(url, view, null)) {
+            return;
+        } else {
+            ImageLoader.getInstance().displayImage(url, view, options);
+        }
+    }
+
+    // キャッシュが存在するときは同期ロードする。デフォルトではキャッシュも非同期ロードなのでちらつく
+    private static boolean displayImageOnCache(String url, ImageView view, ImageLoadingListener listener) {
+        boolean existCache = false;
+        List<Bitmap> caches = MemoryCacheUtil.findCachedBitmapsForImageUri(url, ImageLoader.getInstance().getMemoryCache());
+        if (caches.size() == 0) {
+            File file = DiscCacheUtil.findInCache(url, ImageLoader.getInstance().getDiscCache());
+            existCache = file != null;
+        } else {
+            existCache = true;
+        }
+
+        if (existCache) {
+            Bitmap bitmap = ImageLoader.getInstance().loadImageSync(url);
+            if (bitmap != null) {
+                view.setImageBitmap(bitmap);
+                if (listener != null) {
+                    listener.onLoadingComplete(url, view, bitmap);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -144,9 +203,6 @@ public class ImageUtil {
         // ツイートに含まれる画像のURLをすべて取得
         ArrayList<String> imageUrls = StatusUtil.getImageUrls(status);
         if (imageUrls.size() > 0) {
-            viewGroup.setVisibility(View.INVISIBLE);
-            wrapperViewGroup.setVisibility(View.INVISIBLE);
-
             boolean viaGranblueFantasy = StatusUtil.viaGranblueFantasy(status);
             int imageHeight = viaGranblueFantasy ? 300 : 400;
             // 画像を貼るスペースをクリア
@@ -176,7 +232,6 @@ public class ImageUtil {
                 boolean cropByAspect = false;
 
                 if (imageUrls.size() > 3) {
-                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                     image.setMaxHeight(imageHeight);
                     image.setAdjustViewBounds(true);
                     image.setScaleType(ImageView.ScaleType.FIT_CENTER);
