@@ -288,7 +288,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/do_reply"
-            android:layout_marginLeft="22dp"
+            android:layout_marginLeft="32dp"
             android:paddingTop="4dp"
             android:paddingRight="4dp"
             android:paddingBottom="4dp"
@@ -300,7 +300,7 @@
 
         <TextView
             android:id="@+id/retweet_count"
-            android:layout_width="32dp"
+            android:layout_width="36dp"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/do_retweet"
             android:paddingBottom="6dp"
