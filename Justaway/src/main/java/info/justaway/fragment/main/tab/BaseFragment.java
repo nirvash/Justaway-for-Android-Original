@@ -41,6 +41,7 @@ import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
 
 public abstract class BaseFragment extends Fragment implements OnRefreshListener {
 
+    private static final String TAG = BaseFragment.class.getSimpleName();
     protected TwitterAdapter mAdapter;
     protected boolean mAutoLoader = false;
     protected boolean mReloading = false;
@@ -59,12 +60,14 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView");
         View v = inflater.inflate(R.layout.pull_to_refresh_list, container, false);
         if (v == null) {
             return null;

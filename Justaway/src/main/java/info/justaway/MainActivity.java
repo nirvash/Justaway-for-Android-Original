@@ -19,6 +19,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -88,6 +89,7 @@ import twitter4j.auth.AccessToken;
 @SuppressLint("InflateParams")
 @SuppressWarnings("MagicConstant")
 public class MainActivity extends FragmentActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final int REQUEST_ACCOUNT_SETTING = 200;
     private static final int REQUEST_SETTINGS = 300;
@@ -255,6 +257,7 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult");
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case REQUEST_TAB_SETTINGS:
@@ -294,6 +297,9 @@ public class MainActivity extends FragmentActivity {
             default:
                 break;
         }
+
+        // 設定を反映させる
+        mMainPagerAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -304,6 +310,7 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onPostResume() {
+        Log.d(TAG, "onPostResume");
         super.onPostResume();
 
         if (mFirstBoot) {
@@ -325,25 +332,6 @@ public class MainActivity extends FragmentActivity {
             hideQuickPanel();
         }
 
-        mMainPagerAdapter.notifyDataSetChanged();
-        // 以下のように遅延させると
-        // 1. Resume した直後にドラッグを開始する
-        // 2. 下記の notifyDataSetChanged が発火する
-        // 3. タッチイベントが配信されなくなりスクロールできなくなる
-        // という問題がおきるので直に呼ぶようにしている
-/*
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                // フォントサイズの変更や他のアクティビティでのfav/RTを反映
-                try {
-                    mMainPagerAdapter.notifyDataSetChanged();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 1000);
-*/
         if (mSwitchAccessToken != null) {
             TwitterManager.switchAccessToken(mSwitchAccessToken);
             mSwitchAccessToken = null;

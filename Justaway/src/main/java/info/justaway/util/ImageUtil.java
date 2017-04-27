@@ -172,6 +172,12 @@ public class ImageUtil {
 
     // キャッシュが存在するときは同期ロードする。デフォルトではキャッシュも非同期ロードなのでちらつく
     private static boolean displayImageOnCache(String url, ImageView view, ImageLoadingListener listener) {
+        // そもそも PostResume 時に Page がフラグメントを全部作り直してたのが悪かっただけ？
+        // 無駄な再生成をやめたらチラつかなくなったので元の処理に戻している
+        return false;
+    }
+
+    private static boolean displayImageOnCacheImpl(String url, ImageView view, ImageLoadingListener listener) {
         boolean existCache = false;
         List<Bitmap> caches = MemoryCacheUtil.findCachedBitmapsForImageUri(url, ImageLoader.getInstance().getMemoryCache());
         if (caches.size() == 0) {
