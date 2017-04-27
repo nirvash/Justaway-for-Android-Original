@@ -33,6 +33,10 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,6 +77,7 @@ import info.justaway.settings.BasicSettings;
 import info.justaway.task.GetRateLimitTask;
 import info.justaway.task.SendDirectMessageTask;
 import info.justaway.task.UpdateStatusTask;
+import info.justaway.util.ImageUtil;
 import info.justaway.util.KeyboardUtil;
 import info.justaway.util.MessageUtil;
 import info.justaway.util.ThemeUtil;
@@ -100,6 +105,22 @@ public class MainActivity extends FragmentActivity {
     private MainPagerAdapter mMainPagerAdapter;
     private ViewPager mViewPager;
     private Status mInReplyToStatus;
+
+    private BaseLoaderCallback mOpenCVLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            super.onManagerConnected(status);
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                    ImageUtil.initFaceDetector(MainActivity.this);
+                    break;
+                default:
+                    super.onManagerConnected(status);
+                    break;
+            }
+        }
+    };
+
     @SuppressWarnings("deprecation")
     private android.support.v4.app.ActionBarDrawerToggle mDrawerToggle;
     private Activity mActivity;
@@ -305,6 +326,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mOpenCVLoaderCallback);
         EventBus.getDefault().register(this);
     }
 

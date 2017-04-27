@@ -29,7 +29,7 @@ public class JustawayApplication extends Application {
         /**
          * 画像のキャッシュや角丸の設定を行う
          */
-        ImageUtil.init();
+        ImageUtil.init(getApplicationContext());
 
         /**
          * 設定ファイル読み込み

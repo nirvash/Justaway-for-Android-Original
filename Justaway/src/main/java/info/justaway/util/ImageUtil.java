@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +24,20 @@ import com.nostra13.universalimageloader.core.assist.MemoryCacheUtil;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.objdetect.CascadeClassifier;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -37,9 +51,11 @@ import info.justaway.settings.BasicSettings;
 import twitter4j.Status;
 
 public class ImageUtil {
+    private static final String TAG = ImageUtil.class.getSimpleName();
     private static DisplayImageOptions sRoundedDisplayImageOptions;
+    private static CascadeClassifier sFaceDetector = null;
 
-    public static void init() {
+    public static void init(Context context) {
         DisplayImageOptions defaultOptions = new DisplayImageOptions
                 .Builder()
                 .cacheInMemory(true)
@@ -59,6 +75,62 @@ public class ImageUtil {
                 .build();
 
         ImageLoader.getInstance().init(config);
+    }
+
+    private static File setupCascadeFile(Context context) {
+        File cascadeDir = context.getFilesDir();
+        File cascadeFile = null;
+        InputStream is = null;
+        FileOutputStream os = null;
+        try {
+            cascadeFile = new File(cascadeDir, "lbpcascade_animeface.xml");
+            if (!cascadeFile.exists()) {
+                is = context.getResources().openRawResource(R.raw.lbpcascade_animeface);
+                os = new FileOutputStream(cascadeFile);
+                byte[] buffer = new byte[4096];
+                int readLen = 0;
+                while ((readLen = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, readLen);
+                }
+            }
+        } catch (IOException e) {
+            return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // NOP
+                }
+            }
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    // NOP
+                }
+            }
+        }
+        return cascadeFile;
+    }
+
+    private static CascadeClassifier setupFaceDetector(Context context) {
+        File cascadeFile = setupCascadeFile(context);
+        if (cascadeFile == null) {
+            return null;
+        }
+
+        CascadeClassifier detector = new CascadeClassifier(cascadeFile.getAbsolutePath());
+        if (detector.empty()) {
+            return null;
+        }
+        return detector;
+    }
+
+    public static void initFaceDetector(Context context) {
+        if (sFaceDetector == null) {
+            sFaceDetector = setupFaceDetector(context);
+        }
     }
 
     public static void displayImage(String url, ImageView view) {
@@ -91,12 +163,43 @@ public class ImageUtil {
                     float w = image.getWidth();
                     float h = image.getHeight();
                     if (h > 0 && h / w > 3.2f / 3.0f) {
+                        if (sFaceDetector != null) {
+                            MatOfRect faces = new MatOfRect();
+                            Mat imageMat =  new Mat((int)h, (int)w, CvType.CV_8U, new Scalar(4));
+                            Utils.bitmapToMat(image, imageMat);
+
+                            sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 2, 2, new Size(300/5, 300/5), new Size());
+                            Rect[] facesArray = faces.toArray();
+                            if (facesArray.length > 0) {
+                                Rect r = facesArray[0];
+                                Log.d(TAG, String.format("image: (%s, %s)", w, h));
+                                Log.d(TAG, String.format("face area: (%d, %d, %d, %d)", r.x, r.y, r.width, r.height));
+                                int fy = r.y;
+                                int fh = r.height;
+                                if (fh < 300) {
+                                    int padding = (int)(300 - fh) / 2;
+                                    if (fy < padding) {
+                                        fy = 0;
+                                        padding += padding - fy;
+                                    }
+                                    fh += padding;
+                                }
+                                fh = Math.min(fh, (int)h);
+                                Log.d(TAG, String.format("fy, fh: (%d, %d)", fy, fh));
+
+                                Bitmap resized = Bitmap.createBitmap(image, 0, fy, (int) w, fh);
+                                imageView.setImageBitmap(resized);
+                                return;
+                            }
+                        }
+
                         // ソース画像の高さを縮小してセンターを上に移動させる
                         // 渡された Bitmap はメモリキャッシュに乗っているので変更してはダメ
-                        float rate = h/w > 1.5f ? 0.4f : 0.6f;
-                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int)w, (int)(h * rate));
+                        float rate = h / w > 1.5f ? 0.4f : 0.6f;
+                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, (int) (h * rate));
                         imageView.setImageBitmap(resized);
                     }
+
                 }
             }
         };
@@ -312,4 +415,6 @@ public class ImageUtil {
         int dpAsPixels = (int) (sizeInDp * scale + 0.5f);
         return dpAsPixels;
     }
+
+
 }
