@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 
+import info.justaway.settings.BasicSettings;
+import info.justaway.util.ImageUtil;
 import info.justaway.widget.ScaleImageView;
 
 public class ScaleImageFragment extends Fragment {
@@ -21,7 +23,11 @@ public class ScaleImageFragment extends Fragment {
         imageView.setActivity(activity);
         String imageUrl = getArguments().getString("url");
 
-        ImageLoader.getInstance().displayImage(imageUrl, imageView);
+        if (BasicSettings.isDebug()) {
+            ImageUtil.displayImageFaceDetect(imageUrl, imageView);
+        } else {
+            ImageLoader.getInstance().displayImage(imageUrl, imageView);
+        }
 
         return imageView;
     }

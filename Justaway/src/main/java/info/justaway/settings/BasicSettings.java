@@ -35,6 +35,7 @@ public class BasicSettings {
     private static boolean mTalkOrderNewest;
     private static String mUserIconSize;
     private static int mPageCount;
+    private static boolean mIsDebug;
 
     private static final String STREAMING_MODE = "streamingMode";
     private static boolean mStreamingMode;
@@ -88,6 +89,7 @@ public class BasicSettings {
         mFastScroll = preferences.getBoolean("fast_scroll_on", true);
         mTalkOrderNewest = preferences.getBoolean("talk_order_newest", false);
         mDisplayAccountName = DisplayAccountName.valueOf(preferences.getString("display_account_name", "screen_name").toUpperCase());
+        mIsDebug = preferences.getBoolean("is_debug", false);
     }
 
     public static void resetNotification() {
@@ -137,4 +139,6 @@ public class BasicSettings {
     public static DisplayAccountName getDisplayAccountName() {
         return mDisplayAccountName;
     }
+
+    public static boolean isDebug() { return mIsDebug; }
 }
