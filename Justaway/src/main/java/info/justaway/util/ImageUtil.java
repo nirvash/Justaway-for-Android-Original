@@ -171,6 +171,9 @@ if (detector.empty()) {
         ImageLoadingListener listener = new SimpleImageLoadingListener() {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap image) {
+                if (!BasicSettings.enableFaceDetection()) {
+                    return;
+                }
                 int maxHeight = 400;
                 ImageView imageView = (ImageView) view;
                 if (imageView != null) {
@@ -214,12 +217,15 @@ if (detector.empty()) {
                     float h = image.getHeight();
                     if (w > 0 && h / w > 300.0f / 600.0f) {
                         try {
-                            FaceCrop faceCrop = sFaceInfoMap.get(imageUri);
-                            if (faceCrop == null) {
-                                faceCrop = new FaceCrop(maxHeight, w, h);
-                                sFaceInfoMap.put(imageUri, faceCrop);
+                            Bitmap cropImage = null;
+                            if (BasicSettings.enableFaceDetection()) {
+                                FaceCrop faceCrop = sFaceInfoMap.get(imageUri);
+                                if (faceCrop == null) {
+                                    faceCrop = new FaceCrop(maxHeight, w, h);
+                                    sFaceInfoMap.put(imageUri, faceCrop);
+                                }
+                                cropImage = faceCrop.invoke(image);
                             }
-                            Bitmap cropImage = faceCrop.invoke(image);
 
                             if (cropImage != null) {
                                 imageView.setImageBitmap(cropImage);

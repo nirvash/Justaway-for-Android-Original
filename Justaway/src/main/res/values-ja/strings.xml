@@ -259,5 +259,6 @@
     <string name="menu_rate_limit">API制限</string>
     <string name="title_reactions">リアクション</string>
     <string name="pref_title_is_debug">デバッグモード</string>
+    <string name="pref_title_enable_facedetection">顔認識 有効化</string>
 
 </resources>

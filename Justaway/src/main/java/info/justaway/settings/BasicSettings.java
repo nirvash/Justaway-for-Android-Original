@@ -36,6 +36,7 @@ public class BasicSettings {
     private static String mUserIconSize;
     private static int mPageCount;
     private static boolean mIsDebug;
+    private static boolean mEnableFaceDetection;
 
     private static final String STREAMING_MODE = "streamingMode";
     private static boolean mStreamingMode;
@@ -90,6 +91,7 @@ public class BasicSettings {
         mTalkOrderNewest = preferences.getBoolean("talk_order_newest", false);
         mDisplayAccountName = DisplayAccountName.valueOf(preferences.getString("display_account_name", "screen_name").toUpperCase());
         mIsDebug = preferences.getBoolean("is_debug", false);
+        mEnableFaceDetection = preferences.getBoolean("enable_facedetection", false);
     }
 
     public static void resetNotification() {
@@ -141,4 +143,6 @@ public class BasicSettings {
     }
 
     public static boolean isDebug() { return mIsDebug; }
+
+    public static boolean enableFaceDetection() { return mEnableFaceDetection; }
 }
