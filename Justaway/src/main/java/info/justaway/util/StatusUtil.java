@@ -202,6 +202,13 @@ public class StatusUtil {
         return "";
     }
 
+    public static String getVideoUrl(String url) {
+        if (url.lastIndexOf("mp4") != -1) {
+            return url;
+        }
+        return "";
+    }
+
     public static SpannableStringBuilder generateUnderline(String str, final Context context) {
         // URL、メンション、ハッシュタグ が含まれていたら下線を付ける
         SpannableStringBuilder sb = new SpannableStringBuilder();
