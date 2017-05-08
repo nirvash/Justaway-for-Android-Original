@@ -149,7 +149,7 @@ public class FaceCrop {
                 Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
                 Imgproc.equalizeHist(imageMat, imageMat);
 
-                sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 2, 0, new Size(300 / 5, 300 / 5), new Size());
+                sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 3, 0, new Size(300 / 5, 300 / 5), new Size());
                 Rect[] facesArray = faces.toArray();
                 if (facesArray.length > 0) {
                     Rect r = getLargestFace(facesArray);

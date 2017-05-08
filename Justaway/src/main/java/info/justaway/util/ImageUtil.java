@@ -208,28 +208,33 @@ public class ImageUtil {
         }
     }
 
+    // レイアウトが先用
     private static void setImageWithCrop(ImageView imageView, Bitmap loadedImage, boolean cropByAspect) {
         if (cropByAspect) {
             float w = loadedImage.getWidth();
             float h = loadedImage.getHeight();
-            if (h > 0 && w / h > 1.4f) {
-                // 横長の時はクロップにする
+            if (w > 0 && h / w > 300.0f / 600.0f) {
+                // 縦長の時はクロップにする
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                // この時点ではすでに view はレイアウトされているので setMaxHeight とかは無意味？
+
             }
         }
     }
 
+    // レイアウトが後用
     public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect) {
         Bitmap image = entry.bitmap;
 
-        if (cropByAspect) {
+        if (cropByAspect || entry.rect == null) {
             float w = image.getWidth();
             float h = image.getHeight();
-            if (h > 0 && w / h > 1.4f) {
-                // 横長の時はクロップにする
+            if (w > 0 && h / w > 300.0f / 600.0f) {
+                // 縦長の時はクロップにする
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                // この時点ではすでに view はレイアウトされているので setMaxHeight とかは無意味？
+
+                float rate = h / w > 1.5f ? 0.4f : 0.6f;
+                Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, (int) (h * rate));
+                image = resized;
             }
         } else {
             image = FaceCrop.cropFace(image, entry.rect, entry.maxHeight);

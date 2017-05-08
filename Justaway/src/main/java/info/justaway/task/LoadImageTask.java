@@ -224,6 +224,7 @@ public class LoadImageTask implements Runnable {
             } else {
                 mViewGroup.addView(image, layoutParams);
             }
+
             if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
                 ImageUtil.setImageWithCrop(entry, image, false);
             } else {
