@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -20,6 +21,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -76,6 +78,7 @@ import info.justaway.task.GetRateLimitTask;
 import info.justaway.task.SendDirectMessageTask;
 import info.justaway.task.UpdateStatusTask;
 import info.justaway.util.FaceCrop;
+import info.justaway.util.ImageUtil;
 import info.justaway.util.KeyboardUtil;
 import info.justaway.util.MessageUtil;
 import info.justaway.util.ThemeUtil;
@@ -325,6 +328,16 @@ public class MainActivity extends FragmentActivity {
         super.onResume();
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mOpenCVLoaderCallback);
         EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        View view = findViewById(android.R.id.content);
+        Point point = new Point(0, 0);
+        point.set(view.getWidth(), view.getHeight());
+        ImageUtil.setDisplaySize(point);
     }
 
     @Override

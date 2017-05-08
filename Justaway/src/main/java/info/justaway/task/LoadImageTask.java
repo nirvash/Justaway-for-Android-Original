@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -114,15 +115,15 @@ public class LoadImageTask implements Runnable {
     public class Result {
         public String url;
         public Bitmap bitmap;
-        public Rect rect;
+        public FaceCrop faceCrop;
         public int maxHeight;
         public Status status;
 
-        public Result(Status status, String url, Bitmap bitmap, Rect rect, int maxHeight) {
+        public Result(Status status, String url, Bitmap bitmap, FaceCrop faceCrop, int maxHeight) {
             this.status = status;
             this.url = url;
             this.bitmap = bitmap;
-            this.rect = rect;
+            this.faceCrop = faceCrop;
             this.maxHeight = maxHeight;
         }
 
@@ -131,6 +132,14 @@ public class LoadImageTask implements Runnable {
                 return true;
             }
             return false;
+        }
+
+        public boolean isFaceDetected() {
+            if (faceCrop == null) {
+                return false;
+            }
+
+            return faceCrop.isSuccess();
         }
     }
 
@@ -141,7 +150,7 @@ public class LoadImageTask implements Runnable {
             if (bitmap != null) {
                 int w = bitmap.getWidth();
                 int h = bitmap.getHeight();
-                Rect r = null;
+                FaceCrop faceCrop = null;
 
                 try {
                     if (!mEnableCrop || w == 0 || h == 0) {
@@ -149,13 +158,15 @@ public class LoadImageTask implements Runnable {
                     }
 
                     if (BasicSettings.enableFaceDetection()) {
-                        FaceCrop faceCrop = FaceCrop.get(url, mHeight, w, h);
-                        r = faceCrop != null ? faceCrop.getFaceRect(bitmap) : null;
+                        faceCrop = FaceCrop.get(url, mHeight, w, h);
+                        if (faceCrop != null) {
+                            faceCrop.getFaceRect(bitmap);
+                        };
                     }
                 } catch (Exception e) {
 
                 } finally {
-                    mBitmaps.add(new Result(mStatus, url, bitmap, r, mHeight));
+                    mBitmaps.add(new Result(mStatus, url, bitmap, faceCrop, mHeight));
                 }
 
             }
@@ -181,6 +192,7 @@ public class LoadImageTask implements Runnable {
             return;
         }
 
+        Point viewSize = ImageUtil.getDisplaySize();
 
         int index = 0;
         for (final Result entry : mBitmaps) {
@@ -225,10 +237,13 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(image, layoutParams);
             }
 
+            float viewHeight = mHeight;
+            float viewWidth = viewSize.x * 0.8f / mUrls.size();
+
             if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
-                ImageUtil.setImageWithCrop(entry, image, false);
+                ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
             } else {
-                ImageUtil.setImageWithCrop(entry, image, cropByAspect);
+                ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth);
             }
 
             setClickListener(index, image);
@@ -254,11 +269,13 @@ public class LoadImageTask implements Runnable {
         }
 
         int maxHeight = mHeight;
+        Point viewSize = ImageUtil.getDisplaySize();
+
         // タイルレイアウト
         LinearLayout view = new LinearLayout(mContext);
         view.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams layoutParams2 =
-                new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
+                new LinearLayout.LayoutParams(0, maxHeight, 1.3f);
         if (pairPosition == 0) {
             layoutParams2.setMargins(0, 0, 5, 0);
         } else if (pairPosition == 1) {
@@ -272,14 +289,21 @@ public class LoadImageTask implements Runnable {
         int height = (maxHeight - 10) / 2;
         for (final Result entry : mBitmaps) {
             RoundedImageView image = getRoundedImageView();
+            image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
             LinearLayout.LayoutParams layoutParams = null;
+            float viewHeight = maxHeight;
 
             if (pairPosition == index || pairPosition + 1 == index) {
-                layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.0f);
+                layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+                image.setMaxHeight(height);
+                viewHeight = height;
             } else {
                 layoutParams = new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
-                layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                image.setMaxHeight(maxHeight);
+                if (entry.isLandscape()) {
+                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    image.setMaxHeight(maxHeight);
+                }
             }
 
             if (pairPosition == index) {
@@ -294,12 +318,6 @@ public class LoadImageTask implements Runnable {
                 layoutParams.setMargins(5, 0, 5, 0);
             }
 
-            boolean cropByAspect = true;
-
-            image.setAdjustViewBounds(true);
-            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            layoutParams.gravity = Gravity.CENTER_VERTICAL;
-
             if (pairPosition == index || pairPosition + 1 == index) {
                 view.addView(image, layoutParams);
             } else {
@@ -309,7 +327,9 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(view);
             }
 
-            ImageUtil.setImageWithCrop(entry, image, cropByAspect);
+            float viewWidth = viewSize.x * 0.8f * 0.33f;
+
+            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
 
             setClickListener(index, image);
             index++;
@@ -330,6 +350,8 @@ public class LoadImageTask implements Runnable {
         }
 
         int maxHeight = mHeight;
+        Point viewSize = ImageUtil.getDisplaySize();
+
         // 4枚タイルレイアウト
         LinearLayout views[] = new LinearLayout[] { new LinearLayout(mContext), new LinearLayout(mContext) };
         boolean isLeft = true;
@@ -366,7 +388,10 @@ public class LoadImageTask implements Runnable {
             int viewIndex = (index % 2) == 0 ? 0 : 1;
             views[viewIndex].addView(image, layoutParams);
 
-            ImageUtil.setImageWithCrop(entry, image, cropByAspect);
+            float viewHeight = height;
+            float viewWidth = viewSize.x * 0.8f * 0.5f;
+
+            ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth);
 
             setClickListener(index, image);
             index++;

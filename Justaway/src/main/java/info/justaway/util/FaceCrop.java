@@ -36,6 +36,7 @@ public class FaceCrop {
     private float mWidth;
     private float mHeight;
     private Rect mRect;
+    private int mColor = Color.MAGENTA;
 
     private static CascadeClassifier sFaceDetector = null;
     private static Map<String, FaceCrop> sFaceInfoMap = new LinkedHashMap<String, FaceCrop>(100, 0.75f, true) {
@@ -140,6 +141,7 @@ public class FaceCrop {
     }
 
     public Rect getFaceRect(Bitmap bitmap) {
+        mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
         if (mIsFirst) {
             mIsFirst = false;
             if (sFaceDetector != null) {
@@ -164,26 +166,33 @@ public class FaceCrop {
         return mRect;
     }
 
-    static public Bitmap cropFace(Bitmap bitmap, Rect rect, int maxHeight) {
-        if (rect == null) {
+    public Bitmap cropFace(Bitmap bitmap, float aspect) {
+        if (!mIsSuccess) {
             return bitmap;
         }
 
-        int c = Color.MAGENTA;
-        int w = bitmap.getWidth();
+        float w = bitmap.getWidth();
+        float h = bitmap.getHeight();
+        float bitmapAspect = h / w;
 
         if (BasicSettings.isDebug()) {
-            bitmap = drawFaceRegion(rect, bitmap, c);
+            bitmap = drawFaceRegion(mRect, bitmap, mColor);
         }
-        Rect r = new Rect(rect.x, rect.y, rect.width, rect.height);
-        r = addVPadding(r, bitmap, maxHeight);
-        Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, w, r.height);
-        return resized;
 
+        Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+        if (bitmapAspect > aspect) {
+            r = addVPadding(r, bitmap, (int) (w * aspect));
+            Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, (int)w, r.height);
+            return resized;
+        } else {
+            r = addHPadding(r, bitmap, (int) (h / aspect));
+            Bitmap resized = Bitmap.createBitmap(bitmap, r.x, 0, r.width, (int)h);
+            return resized;
+        }
     }
 
     public Bitmap invoke(Bitmap bitmap) {
-        int c = mIsFirst ? Color.MAGENTA : Color.GREEN;
+        mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
         if (mIsFirst) {
             mIsFirst = false;
             if (sFaceDetector != null) {
@@ -193,7 +202,7 @@ public class FaceCrop {
                 Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
                 Imgproc.equalizeHist(imageMat, imageMat);
 
-                sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 2, 0, new Size(300 / 5, 300 / 5), new Size());
+                sFaceDetector.detectMultiScale(imageMat, faces, 1.1f, 3, 0, new Size(300 / 5, 300 / 5), new Size());
                 Rect[] facesArray = faces.toArray();
                 if (facesArray.length > 0) {
                     Rect r = getLargestFace(facesArray);
@@ -207,7 +216,7 @@ public class FaceCrop {
 
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
-                bitmap = drawFaceRegion(mRect, bitmap, c);
+                bitmap = drawFaceRegion(mRect, bitmap, mColor);
             }
             Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
             r = addVPadding(r, bitmap, mMaxHeight);
@@ -219,15 +228,39 @@ public class FaceCrop {
     }
 
     static private Rect addVPadding(Rect r, Bitmap bitmap, int maxHeight) {
-        // 大きいときに周囲にパディングいれても横幅からの比で影響しないことが多いが一応
         int padding = r.height < maxHeight ? maxHeight - r.height : (int)(r.height * 0.2f);
         r.y -= padding / 2;
         r.height += padding;
         if (r.y < 0) {
             r.y = 0;
         }
-        if (r.y + r.height > bitmap.getHeight()) {
+        int bottomExcess =r.y + r.height - bitmap.getHeight();
+
+        if (bottomExcess > 0) {
+            r.y -= bottomExcess;
+            if (r.y < 0) {
+                r.y = 0;
+            }
             r.height = bitmap.getHeight() - r.y;
+        }
+        return r;
+    }
+
+    static private Rect addHPadding(Rect r, Bitmap bitmap, int maxWidth) {
+        int padding = r.width < maxWidth ? maxWidth - r.width : (int)(r.width * 0.2f);
+        r.x -= padding / 2;
+        r.width += padding;
+        if (r.x < 0) {
+            r.x = 0;
+        }
+        int rightExcess =r.x + r.width - bitmap.getWidth();
+
+        if (rightExcess > 0) {
+            r.x -= rightExcess;
+            if (r.x < 0) {
+                r.x = 0;
+            }
+            r.width = bitmap.getWidth() - r.x;
         }
         return r;
     }
@@ -252,5 +285,9 @@ public class FaceCrop {
             sFaceInfoMap.put(imageUri, faceCrop);
         }
         return faceCrop;
+    }
+
+    public boolean isSuccess() {
+        return mIsSuccess;
     }
 }

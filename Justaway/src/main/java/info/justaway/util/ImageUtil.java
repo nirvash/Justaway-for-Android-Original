@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.View;
@@ -47,6 +48,7 @@ import twitter4j.Status;
 public class ImageUtil {
     private static final String TAG = ImageUtil.class.getSimpleName();
     private static DisplayImageOptions sRoundedDisplayImageOptions;
+    private static Point mDisplaySize;
 
     public static void init(Context context) {
         DisplayImageOptions defaultOptions = new DisplayImageOptions
@@ -70,6 +72,14 @@ public class ImageUtil {
 
         ImageLoader.getInstance().init(config);
         LoadImageTask.initEngine();
+    }
+
+    public static Point getDisplaySize(){
+        return mDisplaySize;
+    }
+
+    public static void setDisplaySize(Point point) {
+        mDisplaySize = point;
     }
 
 
@@ -216,31 +226,65 @@ public class ImageUtil {
             if (w > 0 && h / w > 300.0f / 600.0f) {
                 // 縦長の時はクロップにする
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-
             }
         }
     }
 
     // レイアウトが後用
-    public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect) {
+    public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect, float viewHeight, float viewWidth) {
         Bitmap image = entry.bitmap;
+        float viewAspect = viewHeight / viewWidth;
 
-        if (cropByAspect || entry.rect == null) {
+        if (cropByAspect || !entry.isFaceDetected()) {
             float w = image.getWidth();
             float h = image.getHeight();
-            if (w > 0 && h / w > 300.0f / 600.0f) {
-                // 縦長の時はクロップにする
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
+            if (h < viewHeight && w < viewWidth) {
+                // 画像が小さい場合は全体を表示
+                imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                imageView.setImageBitmap(image);
+                return;
+            } else if (w > 0 && h / w > 300.0f / 600.0f && h > viewHeight) {
+                // 縦長のときは上側フォーカスでクロップ
+
+                // ソース画像の高さを縮小してセンターを上に移動させる
+                // 渡された Bitmap はメモリキャッシュに乗っているので変更してはダメ
                 float rate = h / w > 1.5f ? 0.4f : 0.6f;
-                Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, (int) (h * rate));
-                image = resized;
+                int height = (int)(h * rate);
+                if (height  / w > viewHeight / viewWidth) {
+                    Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, height);
+                    imageView.setImageBitmap(resized);
+                    return;
+                }
             }
-        } else {
-            image = FaceCrop.cropFace(image, entry.rect, entry.maxHeight);
-        }
 
-        imageView.setImageBitmap(image);
+            // 縦横ともに大きい場合は縮小する
+            if (w > viewWidth && h > viewHeight) {
+                float bitmapAspect = h / w;
+                float rate = 1.0f;
+                if (viewAspect > bitmapAspect) {
+                    // 横が余るとき
+                    rate = Math.min(1.0f, viewHeight / h * 1.1f);
+                } else {
+                    rate = Math.min(1.0f, viewWidth / w * 1.1f);
+                }
+
+                if (rate < 1.0f) {
+                    Bitmap resized = Bitmap.createScaledBitmap(image, (int) (w * rate), (int) (h * rate), true);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    imageView.setImageBitmap(resized);
+                } else {
+                    imageView.setImageBitmap(image);
+                }
+            } else {
+                imageView.setImageBitmap(image);
+            }
+        } else if (entry.faceCrop != null) {
+            image = entry.faceCrop.cropFace(image, viewAspect);
+            imageView.setImageBitmap(image);
+        } else {
+            imageView.setImageBitmap(image);
+        }
     }
 
 
