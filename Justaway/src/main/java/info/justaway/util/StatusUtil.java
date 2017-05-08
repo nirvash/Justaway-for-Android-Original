@@ -127,6 +127,48 @@ public class StatusUtil {
         return text;
     }
 
+    public static String getImageUrl(URLEntity url) {
+        Matcher twitpic_matcher = TWITPIC_PATTERN.matcher(url.getExpandedURL());
+        if (twitpic_matcher.find()) {
+            return ("http://twitpic.com/show/full/" + twitpic_matcher.group(1));
+        }
+        Matcher twipple_matcher = TWIPPLE_PATTERN.matcher(url.getExpandedURL());
+        if (twipple_matcher.find()) {
+            return ("http://p.twpl.jp/show/orig/" + twipple_matcher.group(1));
+        }
+        Matcher instagram_matcher = INSTAGRAM_PATTERN.matcher(url.getExpandedURL());
+        if (instagram_matcher.find()) {
+            return (url.getExpandedURL() + "media?size=l");
+        }
+        Matcher photozou_matcher = PHOTOZOU_PATTERN.matcher(url.getExpandedURL());
+        if (photozou_matcher.find()) {
+            return ("http://photozou.jp/p/img/" + photozou_matcher.group(1));
+        }
+        Matcher youtube_matcher = YOUTUBE_PATTERN.matcher(url.getExpandedURL());
+        if (youtube_matcher.find()) {
+            return ("http://i.ytimg.com/vi/" + youtube_matcher.group(1) + "/hqdefault.jpg");
+        }
+        Matcher niconico_matcher = NICONICO_PATTERN.matcher(url.getExpandedURL());
+        if (niconico_matcher.find()) {
+            int id = Integer.valueOf(niconico_matcher.group(1));
+            int host = id % 4 + 1;
+            return ("http://tn-skr" + host + ".smilevideo.jp/smile?i=" + id + ".L");
+        }
+        Matcher pixiv_matcher = PIXIV_PATTERN.matcher(url.getExpandedURL());
+        if (pixiv_matcher.find()) {
+            return ("http://embed.pixiv.net/decorate.php?illust_id=" + pixiv_matcher.group(1));
+        }
+        Matcher gyazo_matcher = GYAZO_PATTERN.matcher(url.getExpandedURL());
+        if (gyazo_matcher.find()) {
+            return ("https://i.gyazo.com/" + gyazo_matcher.group(1) + ".png");
+        }
+        Matcher images_matcher = IMAGES_PATTERN.matcher(url.getExpandedURL());
+        if (images_matcher.find()) {
+            return (url.getExpandedURL());
+        }
+        return null;
+    }
+
     /**
      * ツイートに含まれる画像のURLをすべて取得する
      *
@@ -136,51 +178,9 @@ public class StatusUtil {
     public static ArrayList<String> getImageUrls(Status status) {
         ArrayList<String> imageUrls = new ArrayList<String>();
         for (URLEntity url : status.getURLEntities()) {
-            Matcher twitpic_matcher = TWITPIC_PATTERN.matcher(url.getExpandedURL());
-            if (twitpic_matcher.find()) {
-                imageUrls.add("http://twitpic.com/show/full/" + twitpic_matcher.group(1));
-                continue;
-            }
-            Matcher twipple_matcher = TWIPPLE_PATTERN.matcher(url.getExpandedURL());
-            if (twipple_matcher.find()) {
-                imageUrls.add("http://p.twpl.jp/show/orig/" + twipple_matcher.group(1));
-                continue;
-            }
-            Matcher instagram_matcher = INSTAGRAM_PATTERN.matcher(url.getExpandedURL());
-            if (instagram_matcher.find()) {
-                imageUrls.add(url.getExpandedURL() + "media?size=l");
-                continue;
-            }
-            Matcher photozou_matcher = PHOTOZOU_PATTERN.matcher(url.getExpandedURL());
-            if (photozou_matcher.find()) {
-                imageUrls.add("http://photozou.jp/p/img/" + photozou_matcher.group(1));
-                continue;
-            }
-            Matcher youtube_matcher = YOUTUBE_PATTERN.matcher(url.getExpandedURL());
-            if (youtube_matcher.find()) {
-                imageUrls.add("http://i.ytimg.com/vi/" + youtube_matcher.group(1) + "/hqdefault.jpg");
-                continue;
-            }
-            Matcher niconico_matcher = NICONICO_PATTERN.matcher(url.getExpandedURL());
-            if (niconico_matcher.find()) {
-                int id = Integer.valueOf(niconico_matcher.group(1));
-                int host = id % 4 + 1;
-                imageUrls.add("http://tn-skr" + host + ".smilevideo.jp/smile?i=" + id + ".L");
-                continue;
-            }
-            Matcher pixiv_matcher = PIXIV_PATTERN.matcher(url.getExpandedURL());
-            if (pixiv_matcher.find()) {
-                imageUrls.add("http://embed.pixiv.net/decorate.php?illust_id=" + pixiv_matcher.group(1));
-                continue;
-            }
-            Matcher gyazo_matcher = GYAZO_PATTERN.matcher(url.getExpandedURL());
-            if (gyazo_matcher.find()) {
-                imageUrls.add("https://i.gyazo.com/" + gyazo_matcher.group(1) + ".png");
-                continue;
-            }
-            Matcher images_matcher = IMAGES_PATTERN.matcher(url.getExpandedURL());
-            if (images_matcher.find()) {
-                imageUrls.add(url.getExpandedURL());
+            String imageUrl = StatusUtil.getImageUrl(url);
+            if (imageUrl != null) {
+                imageUrls.add(imageUrl);
             }
         }
 

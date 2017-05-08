@@ -11,7 +11,6 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
@@ -58,7 +57,6 @@ import info.justaway.event.action.OpenEditorEvent;
 import info.justaway.event.action.PostAccountChangeEvent;
 import info.justaway.event.connection.StreamingConnectionEvent;
 import info.justaway.event.settings.BasicSettingsChangeEvent;
-import info.justaway.fragment.dialog.RateLimitFragment;
 import info.justaway.fragment.main.StreamingSwitchDialogFragment;
 import info.justaway.fragment.main.tab.BaseFragment;
 import info.justaway.fragment.main.tab.DirectMessagesFragment;
@@ -77,7 +75,7 @@ import info.justaway.settings.BasicSettings;
 import info.justaway.task.GetRateLimitTask;
 import info.justaway.task.SendDirectMessageTask;
 import info.justaway.task.UpdateStatusTask;
-import info.justaway.util.ImageUtil;
+import info.justaway.util.FaceCrop;
 import info.justaway.util.KeyboardUtil;
 import info.justaway.util.MessageUtil;
 import info.justaway.util.ThemeUtil;
@@ -85,7 +83,6 @@ import info.justaway.util.TwitterUtil;
 import info.justaway.widget.AutoCompleteEditText;
 import info.justaway.widget.ClearEditText;
 import info.justaway.widget.FontelloButton;
-import twitter4j.SavedSearch;
 import twitter4j.Status;
 import twitter4j.StatusUpdate;
 import twitter4j.TwitterException;
@@ -112,7 +109,7 @@ public class MainActivity extends FragmentActivity {
             super.onManagerConnected(status);
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
-                    ImageUtil.initFaceDetector(MainActivity.this);
+                    FaceCrop.initFaceDetector(MainActivity.this);
                     break;
                 default:
                     super.onManagerConnected(status);
