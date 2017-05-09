@@ -276,6 +276,7 @@ public class LoadImageTask implements Runnable {
         view.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams layoutParams2 =
                 new LinearLayout.LayoutParams(0, maxHeight, 1.3f);
+
         if (pairPosition == 0) {
             layoutParams2.setMargins(0, 0, 5, 0);
         } else if (pairPosition == 1) {
@@ -305,6 +306,7 @@ public class LoadImageTask implements Runnable {
                     image.setMaxHeight(maxHeight);
                 }
             }
+            layoutParams.gravity = Gravity.CENTER_VERTICAL;
 
             if (pairPosition == index) {
                 layoutParams.setMargins(0, 0, 0, 10);
