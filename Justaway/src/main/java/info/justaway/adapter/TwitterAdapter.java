@@ -50,7 +50,10 @@ import twitter4j.DirectMessage;
 import twitter4j.Status;
 import twitter4j.User;
 
+import static de.greenrobot.event.EventBus.TAG;
+
 public class TwitterAdapter extends ArrayAdapter<Row> {
+    static final String TAG = TwitterAdapter.class.getSimpleName();
 
     static class ViewHolder {
         @Bind(R.id.action_container) ViewGroup mActionContainer;
@@ -415,6 +418,9 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                 return view;
             }
 
+            String oldTag = (String) holder.mImagesContainer.getTag();
+            Log.d(TAG, String.format("renderStatus: %s, %s, %d", oldTag, status.getId(), position ));
+
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {
                 renderStatus(holder, row, status, null, row.getSource());
@@ -481,8 +487,8 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
     @SuppressLint("SetTextI18n")
     private void renderStatus(final ViewHolder holder, final Row row, final Status status, Status retweet,
                               User favorite) {
-
         long userId = AccessTokenManager.getUserId();
+
 
         if (status.getFavoriteCount() > 0) {
             holder.mFavCount.setText(String.valueOf(status.getFavoriteCount()));

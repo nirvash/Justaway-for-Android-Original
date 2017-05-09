@@ -9,6 +9,9 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.support.v4.text.TextUtilsCompat;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +42,8 @@ import info.justaway.util.StatusUtil;
 import twitter4j.Status;
 
 public class LoadImageTask implements Runnable {
+    private static final String TAG = LoadImageTask.class.getSimpleName();
+
     protected Status mStatus;
     protected List<String> mUrls;
     protected boolean mEnableCrop = false;
@@ -72,9 +77,11 @@ public class LoadImageTask implements Runnable {
             }
         }
 
+        Log.d(TAG, "execute() : mHasCache: " + mHasCache + ", " + mStatus.getId());
+
         if (mHasCache) {
-//            sLoadImageExecutor.execute(this);
-            run();
+            doInBackground();
+            onPostExecute();
         } else {
             sLoadImageExecutor.execute(this);
         }
@@ -174,6 +181,14 @@ public class LoadImageTask implements Runnable {
     }
 
     protected void onPostExecute() {
+        String tag = (String) mViewGroup.getTag();
+        String oldTag = new Long(mStatus.getId()).toString();
+        if (!TextUtils.isEmpty(tag) && !tag.equals(oldTag)) {
+            // 既に List が他のアイテム用に再利用されている
+            Log.w(TAG, String.format("onPostExecute: tag is not match: %s, %s", tag, oldTag));
+            return;
+        }
+
         // 画像を貼るスペースをクリア
         mViewGroup.removeAllViews();
 
