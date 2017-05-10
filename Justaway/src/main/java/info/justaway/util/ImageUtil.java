@@ -1,12 +1,8 @@
 package info.justaway.util;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Point;
-import android.support.annotation.NonNull;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -14,32 +10,19 @@ import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
 
-import com.makeramen.roundedimageview.RoundedImageView;
 import com.nostra13.universalimageloader.core.DefaultConfigurationFactory;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.nostra13.universalimageloader.core.assist.DiscCacheUtil;
 import com.nostra13.universalimageloader.core.assist.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.assist.MemoryCacheUtil;
-import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
-import com.nostra13.universalimageloader.core.assist.deque.LIFOLinkedBlockingDeque;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import info.justaway.JustawayApplication;
-import info.justaway.ScaleImageActivity;
-import info.justaway.VideoActivity;
 import info.justaway.display.FadeInRoundedBitmapDisplayer;
 import info.justaway.settings.BasicSettings;
 import info.justaway.task.LoadImageTask;
@@ -129,104 +112,6 @@ public class ImageUtil {
             return;
         } else {
             ImageLoader.getInstance().displayImage(url, view, listener);
-        }
-    }
-
-    public static void displayImageForCrop(String url, ImageView view) {
-        String tag = (String) view.getTag();
-        if (tag != null && tag.equals(url)) {
-            return;
-        }
-        view.setTag(url);
-
-        ImageLoadingListener listener = new SimpleImageLoadingListener() {
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap image) {
-                ImageView imageView = (ImageView) view;
-                ImageUtil.setImageWithFaceCrop(imageUri, imageView, image, false);
-            }
-        };
-
-        if (displayImageOnCache(url, view, listener)) {
-            return;
-        } else {
-            ImageLoader.getInstance().displayImage(url, view, listener);
-        }
-    }
-
-    private static void setImageWithFaceCrop(String imageUri, ImageView imageView, Bitmap image, boolean setImage) {
-        int maxHeight = 400;
-        if (imageView != null) {
-            // CROP 指定で一定比率のときは画像の下を切り詰めてフォーカス位置を上にずらす
-            float w = image.getWidth();
-            float h = image.getHeight();
-            if (w > 0 && h / w > 300.0f / 600.0f) {
-                try {
-                    Bitmap cropImage = null;
-                    if (BasicSettings.enableFaceDetection()) {
-                        FaceCrop faceCrop =FaceCrop.get(imageUri, maxHeight, w, h);
-                        cropImage = faceCrop != null ? faceCrop.invoke(image) : null;
-                    }
-
-                    if (cropImage != null) {
-                        imageView.setImageBitmap(cropImage);
-                    } else {
-                        // ソース画像の高さを縮小してセンターを上に移動させる
-                        // 渡された Bitmap はメモリキャッシュに乗っているので変更してはダメ
-                        float rate = h / w > 1.5f ? 0.4f : 0.6f;
-                        Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, (int) (h * rate));
-                        imageView.setImageBitmap(resized);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    if (setImage) {
-                        imageView.setImageBitmap(image);
-                    }
-                }
-            } else if (setImage) {
-                imageView.setImageBitmap(image);
-            }
-        }
-    }
-
-
-    // 4枚サムネイルのとき, グラブルからの投稿のとき
-    public static void displayImage(String url, ImageView view, final boolean cropByAspect) {
-        String tag = (String) view.getTag();
-        if (tag != null && tag.equals(url)) {
-            return;
-        }
-        view.setTag(url);
-
-        ImageLoadingListener listener = null;
-
-        if (cropByAspect) { // 4枚サムネイルのとき
-            listener = new SimpleImageLoadingListener() {
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                    ImageView imageView = (ImageView) view;
-                    ImageUtil.setImageWithCrop(imageView, loadedImage, cropByAspect);
-                }
-            };
-        }
-
-        if (displayImageOnCache(url, view, listener)) {
-            return;
-        } else {
-            ImageLoader.getInstance().displayImage(url, view, listener);
-        }
-    }
-
-    // レイアウトが先用
-    private static void setImageWithCrop(ImageView imageView, Bitmap loadedImage, boolean cropByAspect) {
-        if (cropByAspect) {
-            float w = loadedImage.getWidth();
-            float h = loadedImage.getHeight();
-            if (w > 0 && h / w > 300.0f / 600.0f) {
-                // 縦長の時はクロップにする
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            }
         }
     }
 
@@ -386,16 +271,5 @@ public class ImageUtil {
             viewGroup.setVisibility(View.GONE);
             wrapperViewGroup.setVisibility(View.GONE);
         }
-    }
-
-    private static int getDp(Context context, int sizeInDp) {
-        float scale = context.getResources().getDisplayMetrics().density;
-        int dpAsPixels = (int) (sizeInDp * scale + 0.5f);
-        return dpAsPixels;
-    }
-
-
-    private static class FaceInfo {
-
     }
 }

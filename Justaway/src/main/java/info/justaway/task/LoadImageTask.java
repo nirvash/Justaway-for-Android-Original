@@ -184,6 +184,7 @@ public class LoadImageTask implements Runnable {
     }
 
     protected void onPostExecute() {
+        // 同じ項目の View が再利用されるケースはほとんどない様子だが
         String tag = (String) mViewGroup.getTag();
         String oldTag = new Long(mStatus.getId()).toString();
         if (!TextUtils.isEmpty(tag) && !tag.equals(oldTag)) {
@@ -209,6 +210,8 @@ public class LoadImageTask implements Runnable {
         if (layoutFourThumbnailsSpecial()) {
             return;
         }
+
+        // TODO : 3枚で 2,1 みたいなレイアウト
 
         layoutThumbnailsHorizontal();
     }
@@ -276,7 +279,7 @@ public class LoadImageTask implements Runnable {
         return true;
     }
 
-    // Land, Land, Hori, Hori or Hori, Hori, Land, Land, or Hori, Land, Land, Hori
+    // 縦2 を含む4枚レイアウト
     private boolean layoutFourThumbnailsSpecial() {
         if (mBitmaps.size() <= 3) {
             return false;
@@ -365,6 +368,7 @@ public class LoadImageTask implements Runnable {
         return true;
     }
 
+    // 縦2、横2 の4枚レイアウト
     private boolean layoutFourThumbnailsInSquare() {
         if (mBitmaps.size() <= 3) {
             return false;
