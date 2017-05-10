@@ -5,11 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.os.AsyncTask;
 import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.v4.text.TextUtilsCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -22,8 +19,6 @@ import android.widget.Space;
 import com.makeramen.roundedimageview.RoundedImageView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.deque.LIFOLinkedBlockingDeque;
-
-import org.opencv.core.Rect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,6 +136,12 @@ public class LoadImageTask implements Runnable {
             return false;
         }
 
+        // おおよそ正方形かどうか
+        public boolean isSquare() {
+            float aspect = (float)(bitmap.getWidth()) / bitmap.getHeight();
+            return Math.abs(aspect - 1.0f) < 0.2f;
+        }
+
         public boolean isFaceDetected() {
             if (faceCrop == null) {
                 return false;
@@ -148,6 +149,8 @@ public class LoadImageTask implements Runnable {
 
             return faceCrop.isSuccess();
         }
+
+
     }
 
 
@@ -207,6 +210,11 @@ public class LoadImageTask implements Runnable {
             return;
         }
 
+        layoutThumbnailsHorizontal();
+    }
+
+    // 水平レイアウト配置 (1枚、2～4枚横並び)
+    private boolean layoutThumbnailsHorizontal() {
         Point viewSize = ImageUtil.getDisplaySize();
 
         int index = 0;
@@ -264,6 +272,8 @@ public class LoadImageTask implements Runnable {
             setClickListener(index, image);
             index++;
         }
+
+        return true;
     }
 
     // Land, Land, Hori, Hori or Hori, Hori, Land, Land, or Hori, Land, Land, Hori
@@ -300,6 +310,7 @@ public class LoadImageTask implements Runnable {
             layoutParams2.setMargins(5, 0, 0, 0);
         }
         view.setLayoutParams(layoutParams2);
+        view.setMinimumHeight(maxHeight);
 
         int index = 0;
         int height = (maxHeight - 10) / 2;
@@ -313,13 +324,12 @@ public class LoadImageTask implements Runnable {
             if (pairPosition == index || pairPosition + 1 == index) {
                 layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
                 image.setMaxHeight(height);
+                image.setMinimumHeight(height);
                 viewHeight = height;
             } else {
                 layoutParams = new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
-                if (entry.isLandscape()) {
-                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    image.setMaxHeight(maxHeight);
-                }
+                image.setMaxHeight(maxHeight);
+                image.setMinimumHeight(maxHeight);
             }
             layoutParams.gravity = Gravity.CENTER_VERTICAL;
 

@@ -241,7 +241,11 @@ public class ImageUtil {
 
             if (h < viewHeight && w < viewWidth) {
                 // 画像が小さい場合は全体を表示
-                imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                if (h / viewHeight < 0.8f) {
+                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                } else {
+
+                }
                 imageView.setImageBitmap(image);
                 return;
             } else if (w > 0 && h / w > 300.0f / 600.0f && h > viewHeight) {
