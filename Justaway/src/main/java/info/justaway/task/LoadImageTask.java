@@ -174,7 +174,7 @@ public class LoadImageTask implements Runnable {
                         };
                     }
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 } finally {
                     mBitmaps.add(new Result(mStatus, url, bitmap, faceCrop, mHeight));
                 }

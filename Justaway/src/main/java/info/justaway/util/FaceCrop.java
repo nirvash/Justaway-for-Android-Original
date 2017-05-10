@@ -8,20 +8,28 @@ import android.graphics.Paint;
 import android.util.Log;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import info.justaway.R;
@@ -36,7 +44,9 @@ public class FaceCrop {
     private float mWidth;
     private float mHeight;
     private Rect mRect;
+    private List<Rect> mRects = new ArrayList<>();
     private int mColor = Color.MAGENTA;
+    private boolean mIsFace = false;
 
     private static CascadeClassifier sFaceDetector = null;
     private static Map<String, FaceCrop> sFaceInfoMap = new LinkedHashMap<String, FaceCrop>(100, 0.75f, true) {
@@ -130,10 +140,31 @@ public class FaceCrop {
         }
     }
 
+    private static Bitmap drawFaceRegions(List<Rect> rects, Bitmap image, int color) {
+        try {
+            Bitmap result = image.copy(Bitmap.Config.ARGB_8888, true);
+            Paint paint = new Paint();
+            paint.setColor(color);
+            paint.setStrokeWidth(4);
+            paint.setStyle(Paint.Style.STROKE);
+
+            Canvas canvas = new Canvas(result);
+            for (Rect rect : rects) {
+                canvas.drawRect(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, paint);
+            }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return image;
+        }
+    }
+
+
     public Bitmap drawRegion(Bitmap bitmap) {
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
-                bitmap = drawFaceRegion(mRect, bitmap, Color.GREEN);
+//                bitmap = drawFaceRegion(mRect, bitmap, Color.GREEN);
+                bitmap = drawFaceRegions(mRects, bitmap, mColor);
                 return bitmap;
             }
         }
@@ -141,14 +172,17 @@ public class FaceCrop {
     }
 
     public Rect getFaceRect(Bitmap bitmap) {
-        mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
+        mColor = mIsFirst ? Color.MAGENTA : mIsFace ? Color.GREEN : Color.CYAN;
         if (mIsFirst) {
             mIsFirst = false;
             if (sFaceDetector != null) {
                 MatOfRect faces = new MatOfRect();
                 Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
                 Utils.bitmapToMat(bitmap, imageMat);
+
+                // グレースケール化 (色情報はいらない)
                 Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
+                // ヒストグラム均一化
                 Imgproc.equalizeHist(imageMat, imageMat);
 
                 sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 3, 0, new Size(300 / 5, 300 / 5), new Size());
@@ -158,9 +192,177 @@ public class FaceCrop {
                     Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
                     Log.d(TAG, String.format("face area: (%d, %d, %d, %d)", r.x, r.y, r.width, r.height));
                     mRect = r;
+                    mRects.clear();
+                    Collections.addAll(mRects, facesArray);
+                    mIsFace = true;
                     mIsSuccess = true;
+                } else {
+//                    return getCounterRect(bitmap);
+                    return getFeatureArea(bitmap);
                 }
             }
+        }
+
+        return mRect;
+    }
+
+    private Rect getGravityCenter(Bitmap bitmap) {
+        MatOfRect faces = new MatOfRect();
+        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+        Mat mask = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+        Mat hadairo = Mat.zeros((int) mHeight, (int) mWidth, CvType.CV_8U);
+
+        Utils.bitmapToMat(bitmap, imageMat);
+
+        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
+        Imgproc.medianBlur(imageMat, imageMat, 3);
+
+        Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
+
+        // 肌色抽出
+        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), mask);
+
+        // 重心取得
+        // Utils.matToBitmap(mask, dst);
+        Utils.bitmapToMat(bitmap, imageMat);
+        Imgproc.cvtColor(hadairo, hadairo, Imgproc.COLOR_RGB2GRAY);
+        // Utils.matToBitmap(hadairo, dst);
+
+        Moments mu = Imgproc.moments(hadairo, false);
+
+        Rect r = new Rect();
+        r.x = (int) (mu.m10 / mu.m00);
+        r.y = (int) (mu.m01 / mu.m00);
+
+        r.x -= 50;
+        r.width = 100;
+        r.y -= 50;
+        r.height = 100;
+
+        mRect = r;
+        mRects.clear();
+        mRects.add(r);
+        mIsSuccess = true;
+        mColor = Color.BLUE;
+        return mRect;
+    }
+
+    // 領域分割
+    private Rect getFeatureArea(Bitmap bitmap) {
+        MatOfRect faces = new MatOfRect();
+        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+
+        Utils.bitmapToMat(bitmap, imageMat);
+
+        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
+        Imgproc.medianBlur(imageMat, imageMat, 5);
+
+        Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
+        Mat tmp =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+
+        // 肌色抽出
+        Mat bw =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+
+        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), bw);
+
+        Imgproc.threshold(bw, bw, 0, 255, Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
+
+        // ノイズ除去 (膨張 and 収縮)
+        Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
+        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
+        bw.convertTo(tmp, CvType.CV_8U);
+        Utils.matToBitmap(tmp, dst);
+
+        // 背景領域
+        Mat sureBg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+        Imgproc.dilate(bw, sureBg, kernel, new Point(-1, -1),  3);
+        sureBg.convertTo(tmp, CvType.CV_8U);
+        Utils.matToBitmap(tmp, dst);
+
+        // 輪郭の内側に行くほど白が残るマスク
+        Mat sureFg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+        Imgproc.distanceTransform(bw, sureFg, Imgproc.DIST_L2, 3); // 3.5 or 0
+
+        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        Utils.matToBitmap(tmp, dst);
+
+        Core.normalize(sureFg, sureFg, 0.0f, 1.0f, Core.NORM_MINMAX);
+
+        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        Utils.matToBitmap(tmp, dst);
+
+        // 中心部分だけ抽出
+        Imgproc.threshold(sureFg, sureFg, 0.4f, 1.0f, Imgproc.THRESH_BINARY);
+        Imgproc.dilate(sureFg, sureFg, kernel,  new Point(-1, -1), 3);
+
+        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        Utils.matToBitmap(tmp, dst);
+/*
+        // マーカー取得
+        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        Mat hierarchy = Mat.zeros(new Size(5,5), CvType.CV_8UC1);
+        Imgproc.findContours(sureFg, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        // マーカー画像作成
+        Mat markers = Mat.zeros(sureFg.size(), CvType.CV_32SC1);
+        for (int i=0; i<contours.size(); i++) {
+            Imgproc.drawContours(markers, contours, i, Scalar.all(i + 1), -1); // マイナスで塗りつぶし
+        }
+        // 背景用マーカー
+*/
+        Mat markers = Mat.zeros(sureFg.size(), CvType.CV_32SC1);
+
+        sureFg.convertTo(sureFg, CvType.CV_8U);
+        int nLabels = Imgproc.connectedComponents(sureFg, markers, 8, CvType.CV_32SC1);
+
+        Imgproc.watershed(imageMat, markers);
+
+        markers.convertTo(tmp, CvType.CV_8UC3);
+        Utils.matToBitmap(tmp, dst);
+
+
+
+        mRect = null;
+        mRects.clear();
+        return mRect;
+    }
+
+    private Rect getCounterRect(Bitmap bitmap) {
+        MatOfRect faces = new MatOfRect();
+        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+
+        Utils.bitmapToMat(bitmap, imageMat);
+
+        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
+        Imgproc.medianBlur(imageMat, imageMat, 5);
+
+       // Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
+
+        // 肌色抽出
+        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), imageMat);
+
+        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+        Mat hierarchy = Mat.zeros(new Size(5,5), CvType.CV_8UC1);
+
+        Imgproc.findContours(imageMat, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        mRect = null;
+        mRects.clear();
+        double maxArea = 0;
+        for (MatOfPoint contour : contours) {
+            Rect r = Imgproc.boundingRect(contour);
+            mRects.add(r);
+
+            double area = Imgproc.contourArea(contour);
+            if (maxArea < area) {
+                maxArea = area;
+                mRect = r;
+            }
+        }
+
+        if (contours.size() > 0) {
+            mColor = Color.BLUE;
+            mIsSuccess = true;
         }
 
         return mRect;
@@ -176,7 +378,8 @@ public class FaceCrop {
         float bitmapAspect = h / w;
 
         if (BasicSettings.isDebug()) {
-            bitmap = drawFaceRegion(mRect, bitmap, mColor);
+//            bitmap = drawFaceRegion(mRect, bitmap, mColor);
+            bitmap = drawFaceRegions(mRects, bitmap, mColor);
         }
 
         Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
@@ -209,6 +412,8 @@ public class FaceCrop {
                     Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
                     Log.d(TAG, String.format("face area: (%d, %d, %d, %d)", r.x, r.y, r.width, r.height));
                     mRect = r;
+                    mRects.clear();
+                    Collections.addAll(mRects, facesArray);
                     mIsSuccess = true;
                 }
             }

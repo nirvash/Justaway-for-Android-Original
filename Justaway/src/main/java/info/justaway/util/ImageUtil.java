@@ -31,7 +31,7 @@ import twitter4j.Status;
 public class ImageUtil {
     private static final String TAG = ImageUtil.class.getSimpleName();
     private static DisplayImageOptions sRoundedDisplayImageOptions;
-    private static Point mDisplaySize;
+    private static Point mDisplaySize = new Point(1080, 1920);
 
     public static void init(Context context) {
         DisplayImageOptions defaultOptions = new DisplayImageOptions
