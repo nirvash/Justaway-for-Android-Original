@@ -148,17 +148,17 @@ public class ImageUtil {
             }
 
             // 縦横ともに大きい場合は縮小する
-            if (w > viewWidth && h > viewHeight) {
+            if (w > viewWidth && h > (viewHeight * 0.8f)) {
                 float bitmapAspect = h / w;
                 float rate = 1.0f;
                 if (viewAspect > bitmapAspect) {
                     // 横が余るとき
-                    rate = Math.min(1.0f, viewHeight / h * 1.1f);
+                    rate = Math.min(1.2f, viewHeight / h * 1.1f);
                 } else {
-                    rate = Math.min(1.0f, viewWidth / w * 1.1f);
+                    rate = Math.min(1.2f, viewWidth / w * 1.1f);
                 }
 
-                if (rate < 1.0f) {
+                if (rate < 1.2f) {
                     Bitmap resized = Bitmap.createScaledBitmap(image, (int) (w * rate), (int) (h * rate), true);
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     imageView.setImageBitmap(resized);
