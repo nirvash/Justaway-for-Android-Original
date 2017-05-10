@@ -197,8 +197,8 @@ public class FaceCrop {
                     mIsFace = true;
                     mIsSuccess = true;
                 } else {
-//                    return getCounterRect(bitmap);
-                    return getFeatureArea(bitmap);
+                    return getCounterRect(bitmap);
+    //                return getFeatureArea(bitmap);
                 }
             }
         }
@@ -250,12 +250,13 @@ public class FaceCrop {
     // 領域分割
     private Rect getFeatureArea(Bitmap bitmap) {
         MatOfRect faces = new MatOfRect();
+        Mat srcMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+
+        Utils.bitmapToMat(bitmap, srcMat);
+
         Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-
-        Utils.bitmapToMat(bitmap, imageMat);
-
-        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
-        Imgproc.medianBlur(imageMat, imageMat, 5);
+        Imgproc.cvtColor(srcMat, imageMat, Imgproc.COLOR_RGB2HSV);
+        Imgproc.medianBlur(imageMat, imageMat, 3);
 
         Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
         Mat tmp =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
@@ -264,63 +265,82 @@ public class FaceCrop {
         Mat bw =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
 
         Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), bw);
+        Utils.matToBitmap(bw, dst);
 
         Imgproc.threshold(bw, bw, 0, 255, Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
+        Utils.matToBitmap(bw, dst);
 
         // ノイズ除去 (膨張 and 収縮)
         Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
         Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
-        bw.convertTo(tmp, CvType.CV_8U);
+//        bw.convertTo(tmp, CvType.CV_8U);
+        Imgproc.cvtColor(bw, tmp, Imgproc.COLOR_GRAY2RGB, 4);
         Utils.matToBitmap(tmp, dst);
 
         // 背景領域
         Mat sureBg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
         Imgproc.dilate(bw, sureBg, kernel, new Point(-1, -1),  3);
-        sureBg.convertTo(tmp, CvType.CV_8U);
+//        sureBg.convertTo(tmp, CvType.CV_8U);
+        Imgproc.cvtColor(sureBg, tmp, Imgproc.COLOR_GRAY2RGB, 4);
         Utils.matToBitmap(tmp, dst);
 
         // 輪郭の内側に行くほど白が残るマスク
         Mat sureFg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Imgproc.distanceTransform(bw, sureFg, Imgproc.DIST_L2, 3); // 3.5 or 0
+        Imgproc.distanceTransform(bw, sureFg, Imgproc.DIST_L2, 3); // 3.5 or 0 CV_8C1 -> CV_32FC1
 
-        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        sureFg.convertTo(tmp, CvType.CV_8U);
+        Imgproc.equalizeHist(tmp, tmp);
         Utils.matToBitmap(tmp, dst);
 
-        Core.normalize(sureFg, sureFg, 0.0f, 1.0f, Core.NORM_MINMAX);
+        Core.normalize(sureFg, sureFg, 0.0f, 255.0f, Core.NORM_MINMAX);
 
-        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        sureFg.convertTo(tmp, CvType.CV_8U);
+        Imgproc.equalizeHist(tmp, tmp);
         Utils.matToBitmap(tmp, dst);
 
         // 中心部分だけ抽出
-        Imgproc.threshold(sureFg, sureFg, 0.4f, 1.0f, Imgproc.THRESH_BINARY);
-        Imgproc.dilate(sureFg, sureFg, kernel,  new Point(-1, -1), 3);
+        Imgproc.threshold(sureFg, sureFg, 40, 255, Imgproc.THRESH_BINARY);
+        Imgproc.dilate(sureFg, sureFg, kernel,  new Point(-1, -1), 3); // CV_32FC1 -> CV_32FC1
 
-        sureFg.convertTo(tmp, CvType.CV_8UC3);
+        sureFg.convertTo(tmp, CvType.CV_8U);
+        Imgproc.equalizeHist(tmp, tmp);
         Utils.matToBitmap(tmp, dst);
-/*
-        // マーカー取得
-        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-        Mat hierarchy = Mat.zeros(new Size(5,5), CvType.CV_8UC1);
-        Imgproc.findContours(sureFg, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        // マーカー画像作成
-        Mat markers = Mat.zeros(sureFg.size(), CvType.CV_32SC1);
-        for (int i=0; i<contours.size(); i++) {
-            Imgproc.drawContours(markers, contours, i, Scalar.all(i + 1), -1); // マイナスで塗りつぶし
-        }
-        // 背景用マーカー
-*/
+        // 不明領域
+        Mat sureFgUC1 = sureFg.clone();
+        sureFg.convertTo(sureFgUC1, CvType.CV_8UC1);
+        Mat unknown = sureFg.clone();
+        Core.subtract(sureBg, sureFgUC1, unknown);
+
+        unknown.convertTo(tmp, CvType.CV_8U);
+        Imgproc.equalizeHist(tmp, tmp);
+        Utils.matToBitmap(tmp, dst);
+
         Mat markers = Mat.zeros(sureFg.size(), CvType.CV_32SC1);
 
         sureFg.convertTo(sureFg, CvType.CV_8U);
         int nLabels = Imgproc.connectedComponents(sureFg, markers, 8, CvType.CV_32SC1);
+        if (nLabels < 2) {
+            return mRect;
+        }
 
-        Imgproc.watershed(imageMat, markers);
+        Core.add(markers, new Scalar(1), markers);
+        for (int i=0; i<markers.rows(); i++) {
+            for (int j=0; j<markers.cols(); j++) {
+                double[] data = unknown.get(i, j);
+                if (data[0] == 255) {
+                    int[] val = new int[] { 255 };
+                    markers.put(i, j, val);
+                }
+            }
+        }
 
-        markers.convertTo(tmp, CvType.CV_8UC3);
+        Imgproc.cvtColor(srcMat, srcMat, Imgproc.COLOR_RGBA2RGB);
+        Imgproc.watershed(srcMat, markers);
+
+        markers.convertTo(tmp, CvType.CV_8U);
+        Imgproc.equalizeHist(tmp, tmp);
         Utils.matToBitmap(tmp, dst);
-
-
 
         mRect = null;
         mRects.clear();
@@ -328,6 +348,10 @@ public class FaceCrop {
     }
 
     private Rect getCounterRect(Bitmap bitmap) {
+        if (bitmap == null) {
+            return mRect;
+        }
+
         MatOfRect faces = new MatOfRect();
         Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
 
@@ -339,12 +363,25 @@ public class FaceCrop {
        // Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
 
         // 肌色抽出
-        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), imageMat);
+        Mat bw =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), bw);
+
+       // Imgproc.threshold(bw, bw, 0, 255, Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
+
+        // ノイズ除去 (膨張 and 収縮)
+        Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
+        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
+
+        // 輪郭の内側のみ抽出
+        Imgproc.distanceTransform(bw, bw, Imgproc.DIST_L2, 3); // 3.5 or 0 CV_8C1 -> CV_32FC1
+        Core.normalize(bw, bw, 0.0f, 255.0f, Core.NORM_MINMAX);
+        Imgproc.threshold(bw, bw, 30, 255, Imgproc.THRESH_BINARY);
+        Imgproc.dilate(bw, bw, kernel,  new Point(-1, -1), 3); // CV_32FC1 -> CV_32FC1
+        bw.convertTo(bw, CvType.CV_8U); // CV_32FC1 -> CV_8UC1
 
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
         Mat hierarchy = Mat.zeros(new Size(5,5), CvType.CV_8UC1);
-
-        Imgproc.findContours(imageMat, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(bw, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_TC89_L1);
 
         mRect = null;
         mRects.clear();
