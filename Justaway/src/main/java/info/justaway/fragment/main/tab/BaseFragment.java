@@ -216,7 +216,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
             }
             mStackRows.clear();
 
-            boolean autoScroll = position == 0 && y == 0 && count < 3;
+            boolean autoScroll = position == 0 && y == 0 && count < 5;
 
             if (highlight) {
                 EventBus.getDefault().post(new NewRecordEvent(getTabId(), getSearchWord(), autoScroll));
