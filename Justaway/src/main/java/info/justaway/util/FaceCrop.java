@@ -15,6 +15,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +49,8 @@ public class FaceCrop {
     private boolean mIsFace = false;
 
     private static CascadeClassifier sFaceDetector = null;
+    private static CascadeClassifier sFaceDetector2 = null;
+
     private static Map<String, FaceCrop> sFaceInfoMap = new LinkedHashMap<String, FaceCrop>(100, 0.75f, true) {
         private static final int MAX_ENTRIES = 100;
 
@@ -60,19 +62,22 @@ public class FaceCrop {
 
     public static void initFaceDetector(Context context) {
         if (sFaceDetector == null) {
-            sFaceDetector = setupFaceDetector(context);
+            sFaceDetector = setupFaceDetector(context, "lbpcascade_animeface.xml", R.raw.lbpcascade_animeface);
+        }
+        if (sFaceDetector2 == null) {
+            sFaceDetector2 = setupFaceDetector(context, "lbpcascade_frontalface_improved.xml", R.raw.lbpcascade_frontalface_improved);
         }
     }
 
-    private static File setupCascadeFile(Context context) {
+    private static File setupCascadeFile(Context context, String fileName, int xml) {
         File cascadeDir = context.getFilesDir();
         File cascadeFile = null;
         InputStream is = null;
         FileOutputStream os = null;
         try {
-            cascadeFile = new File(cascadeDir, "lbpcascade_animeface.xml");
+            cascadeFile = new File(cascadeDir, fileName);
             if (!cascadeFile.exists()) {
-                is = context.getResources().openRawResource(R.raw.lbpcascade_animeface);
+                is = context.getResources().openRawResource(xml);
                 os = new FileOutputStream(cascadeFile);
                 byte[] buffer = new byte[4096];
                 int readLen = 0;
@@ -101,8 +106,8 @@ public class FaceCrop {
         return cascadeFile;
     }
 
-    private static CascadeClassifier setupFaceDetector(Context context) {
-        File cascadeFile = setupCascadeFile(context);
+    private static CascadeClassifier setupFaceDetector(Context context, String fileName, int xml) {
+        File cascadeFile = setupCascadeFile(context, fileName, xml);
         if (cascadeFile == null) {
             return null;
         }
@@ -172,10 +177,32 @@ public class FaceCrop {
     }
 
     public Rect getFaceRect(Bitmap bitmap) {
-        mColor = mIsFirst ? Color.MAGENTA : mIsFace ? Color.GREEN : Color.CYAN;
-        if (mIsFirst) {
-            mIsFirst = false;
-            if (sFaceDetector != null) {
+        if (!mIsFirst) {
+            if (mColor == Color.MAGENTA || mColor == Color.GREEN) {
+                mColor = Color.GREEN;
+            } else {
+                mColor = Color.CYAN;
+            }
+            return mRect;
+        }
+
+        if (sFaceDetector == null) {
+            return mRect;
+        }
+
+        mColor = Color.MAGENTA;
+        Rect ret = getFaceRectImpl(bitmap, sFaceDetector, 1.09f, 3, new Size(40, 40), new int[]{0, 10, -10});
+        if (ret == null) {
+            mColor = Color.BLUE;
+            ret = getFaceRectImpl(bitmap, sFaceDetector2,  1.09f, 3, new Size(40, 40), new int[] {0});
+        }
+        mIsFirst = false;
+        return ret;
+    }
+
+    public Rect getFaceRectImpl(Bitmap bitmap, CascadeClassifier faceDetector, double scale, int neighbor, Size size, int[] angles) {
+        if (faceDetector != null) {
+            try {
                 MatOfRect faces = new MatOfRect();
                 Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
                 Utils.bitmapToMat(bitmap, imageMat);
@@ -185,25 +212,59 @@ public class FaceCrop {
                 // ヒストグラム均一化
                 Imgproc.equalizeHist(imageMat, imageMat);
 
-                sFaceDetector.detectMultiScale(imageMat, faces, 1.1, 3, 0, new Size(300 / 5, 300 / 5), new Size());
-                Rect[] facesArray = faces.toArray();
-                if (facesArray.length > 0) {
-                    Rect r = getLargestFace(facesArray);
-                    Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
-                    Log.d(TAG, String.format("face area: (%d, %d, %d, %d)", r.x, r.y, r.width, r.height));
-                    mRect = r;
-                    mRects.clear();
-                    Collections.addAll(mRects, facesArray);
-                    mIsFace = true;
-                    mIsSuccess = true;
-                } else {
-                    return getCounterRect(bitmap);
-    //                return getFeatureArea(bitmap);
+                Mat rotMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+                for (int angle : angles) {
+                    // 回転
+                    if (angle != 0) {
+                        Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth / 2, mHeight / 2), angle, 1.0f);
+                        Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
+                    } else {
+                        rotMat = imageMat.clone();
+                    }
+
+                    faceDetector.detectMultiScale(rotMat, faces, scale, neighbor, 0, size, new Size());
+                    Rect[] facesArray = faces.toArray();
+
+                    if (angle != 0) {
+                        // 回転復元
+                        for (Rect r : facesArray) {
+                            Point inPoint = r.tl();
+                            Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), angle);
+                            r.x = (int) outPoint.x;
+                            r.y = (int) outPoint.y;
+                        }
+                    }
+
+                    if (facesArray.length > 0) {
+                        Rect r = getLargestFace(facesArray);
+                        Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
+                        Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %d", r.x, r.y, r.width, r.height, angle));
+                        mRect = r;
+                        mRects.clear();
+                        Collections.addAll(mRects, facesArray);
+                        mIsFace = true;
+                        mIsSuccess = true;
+                        if (angle != 0) {
+                            mColor = Color.YELLOW;
+                        }
+                        break;
+                    }
                 }
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-
         return mRect;
+    }
+
+    private Point rotatePoint(Point point, Point center, double angle) {
+        double rad = angle * Math.PI / 180.0;
+        Point inPoint = new Point(point.x - center.x, point.y - center.y);
+        Point outPoint = new Point();
+        outPoint.x = Math.cos(rad) * inPoint.x - Math.sin(rad) * inPoint.y + center.x;
+        outPoint.y = Math.sin(rad) * inPoint.x + Math.cos(rad) * inPoint.y + center.y;
+        return outPoint;
     }
 
     private Rect getGravityCenter(Bitmap bitmap) {
@@ -347,7 +408,7 @@ public class FaceCrop {
         return mRect;
     }
 
-    private Rect getCounterRect(Bitmap bitmap) {
+    private Rect getContourRect(Bitmap bitmap) {
         if (bitmap == null) {
             return mRect;
         }
@@ -370,7 +431,7 @@ public class FaceCrop {
 
         // ノイズ除去 (膨張 and 収縮)
         Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
-        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
+        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_CLOSE, kernel, new Point(-1, -1), 2);
 
         // 輪郭の内側のみ抽出
         Imgproc.distanceTransform(bw, bw, Imgproc.DIST_L2, 3); // 3.5 or 0 CV_8C1 -> CV_32FC1
