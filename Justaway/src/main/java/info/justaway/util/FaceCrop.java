@@ -50,6 +50,7 @@ public class FaceCrop {
 
     private static CascadeClassifier sFaceDetector = null;
     private static CascadeClassifier sFaceDetector2 = null;
+    private static CascadeClassifier sFaceDetector_Cat = null;
 
     private static Map<String, FaceCrop> sFaceInfoMap = new LinkedHashMap<String, FaceCrop>(100, 0.75f, true) {
         private static final int MAX_ENTRIES = 100;
@@ -66,6 +67,9 @@ public class FaceCrop {
         }
         if (sFaceDetector2 == null) {
             sFaceDetector2 = setupFaceDetector(context, "lbpcascade_frontalface_improved.xml", R.raw.lbpcascade_frontalface_improved);
+        }
+        if (sFaceDetector_Cat == null) {
+            sFaceDetector_Cat = setupFaceDetector(context, "lbpcascade_cat.xml", R.raw.lbpcascade_cat);
         }
     }
 
@@ -176,6 +180,24 @@ public class FaceCrop {
         return null;
     }
 
+    private class DetectorConf {
+        public DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color) {
+            this.detector = detector;
+            this.angle = angle;
+            this.scale = scale;
+            this.neighbor = neighbor;
+            this.size = size;
+            this.color = color;
+        }
+        public CascadeClassifier detector;
+        public double angle;
+        public double scale;
+        public int neighbor;
+        public Size size;
+        public int color;
+    }
+
+
     public Rect getFaceRect(Bitmap bitmap) {
         if (!mIsFirst) {
             if (mColor == Color.MAGENTA || mColor == Color.GREEN) {
@@ -190,70 +212,96 @@ public class FaceCrop {
             return mRect;
         }
 
-        mColor = Color.MAGENTA;
-        Rect ret = getFaceRectImpl(bitmap, sFaceDetector, 1.09f, 3, new Size(40, 40), new int[]{0, 10, -10});
-        if (ret == null) {
-            mColor = Color.BLUE;
-            ret = getFaceRectImpl(bitmap, sFaceDetector2,  1.09f, 3, new Size(40, 40), new int[] {0});
-        }
         mIsFirst = false;
-        return ret;
+        DetectorConf[] confs = new DetectorConf[] {
+                new DetectorConf(sFaceDetector,   0, 1.09f, 3, new Size(40, 40), Color.MAGENTA),
+                new DetectorConf(sFaceDetector,  10, 1.09f, 3, new Size(40, 40), Color.MAGENTA),
+                new DetectorConf(sFaceDetector, -10, 1.09f, 3,  new Size(40, 40),Color.MAGENTA),
+                new DetectorConf(sFaceDetector2,   0, 1.09f, 3,  new Size(40, 40),Color.BLUE),
+                new DetectorConf(sFaceDetector_Cat,   0, 1.09f, 3, new Size(40, 40), Color.BLUE)
+        };
+
+        try {
+            Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+            Utils.bitmapToMat(bitmap, imageMat);
+
+            // グレースケール化 (色情報はいらない)
+            Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
+            // ヒストグラム均一化
+            Imgproc.equalizeHist(imageMat, imageMat);
+
+            double scale = mWidth * mHeight > 500 * 500 ? 0.5f : 1.0f;
+            if (scale < 1.0f) {
+                Imgproc.resize(imageMat, imageMat, new Size(mWidth * scale, mHeight * scale));
+            }
+
+            for (DetectorConf conf : confs) {
+                mColor = conf.color;
+                Rect ret = getFaceRectImpl(imageMat, conf, scale);
+                if (ret != null) {
+                    return ret;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    public Rect getFaceRectImpl(Bitmap bitmap, CascadeClassifier faceDetector, double scale, int neighbor, Size size, int[] angles) {
-        if (faceDetector != null) {
-            try {
-                MatOfRect faces = new MatOfRect();
-                Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-                Utils.bitmapToMat(bitmap, imageMat);
+    public Rect getFaceRectImpl(Mat imageMat, DetectorConf conf, double scale) {
+        if (conf.detector == null) {
+            return null;
+        }
 
-                // グレースケール化 (色情報はいらない)
-                Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
-                // ヒストグラム均一化
-                Imgproc.equalizeHist(imageMat, imageMat);
+        try {
+            MatOfRect faces = new MatOfRect();
+            Mat rotMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
 
-                Mat rotMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-                for (int angle : angles) {
-                    // 回転
-                    if (angle != 0) {
-                        Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth / 2, mHeight / 2), angle, 1.0f);
-                        Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
-                    } else {
-                        rotMat = imageMat.clone();
+            // 回転
+            if (conf.angle != 0) {
+                Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth / 2, mHeight / 2), conf.angle, 1.0f);
+                Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
+            } else {
+                rotMat = imageMat.clone();
+            }
+
+            conf.detector.detectMultiScale(rotMat, faces, conf.scale, conf.neighbor, 0, conf.size, new Size());
+            Rect[] facesArray = faces.toArray();
+
+            if (conf.angle != 0 || scale != 1.0f) {
+                // 回転復元
+                for (Rect r : facesArray) {
+                    if (conf.angle != 0) {
+                        Point inPoint = r.tl();
+                        Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), conf.angle);
+                        r.x = (int) outPoint.x;
+                        r.y = (int) outPoint.y;
                     }
-
-                    faceDetector.detectMultiScale(rotMat, faces, scale, neighbor, 0, size, new Size());
-                    Rect[] facesArray = faces.toArray();
-
-                    if (angle != 0) {
-                        // 回転復元
-                        for (Rect r : facesArray) {
-                            Point inPoint = r.tl();
-                            Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), angle);
-                            r.x = (int) outPoint.x;
-                            r.y = (int) outPoint.y;
-                        }
-                    }
-
-                    if (facesArray.length > 0) {
-                        Rect r = getLargestFace(facesArray);
-                        Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
-                        Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %d", r.x, r.y, r.width, r.height, angle));
-                        mRect = r;
-                        mRects.clear();
-                        Collections.addAll(mRects, facesArray);
-                        mIsFace = true;
-                        mIsSuccess = true;
-                        if (angle != 0) {
-                            mColor = Color.YELLOW;
-                        }
-                        break;
+                    if (scale != 1.0f) {
+                        r.x /= scale;
+                        r.y /= scale;
+                        r.width /= scale;
+                        r.height /= scale;
                     }
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
+            if (facesArray.length > 0) {
+                Rect r = getLargestFace(facesArray);
+                Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
+                Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
+                mRect = r;
+                mRects.clear();
+                Collections.addAll(mRects, facesArray);
+                mIsFace = true;
+                mIsSuccess = true;
+                if (conf.angle != 0) {
+                    mColor = Color.YELLOW;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return mRect;
     }
