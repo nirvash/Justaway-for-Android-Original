@@ -177,7 +177,7 @@ public class FaceCrop {
                 return bitmap;
             }
         }
-        return null;
+        return bitmap;
     }
 
     private class DetectorConf {
@@ -199,6 +199,10 @@ public class FaceCrop {
 
 
     public Rect getFaceRect(Bitmap bitmap) {
+        if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0) {
+            return mRect;
+        }
+
         if (!mIsFirst) {
             if (mColor == Color.MAGENTA || mColor == Color.GREEN) {
                 mColor = Color.GREEN;
@@ -541,6 +545,10 @@ public class FaceCrop {
     }
 
     public Bitmap invoke(Bitmap bitmap) {
+        if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0) {
+            return bitmap;
+        }
+
         mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
         if (mIsFirst) {
             mIsFirst = false;

@@ -25,6 +25,7 @@ dependencies {
     compile 'com.github.chrisbanes.actionbarpulltorefresh:library:0.9.9'
     compile fileTree(include: '*.jar', dir: 'libs')
     compile project(':openCVLibrary320')
+    compile 'ch.acra:acra:4.9.2'
 }
 
 android {

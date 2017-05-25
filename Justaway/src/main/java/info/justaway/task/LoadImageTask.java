@@ -164,7 +164,7 @@ public class LoadImageTask implements Runnable {
 
                 try {
                     if (!mEnableCrop || w == 0 || h == 0) {
-                        return;
+                        continue;
                     }
 
                     if (BasicSettings.enableFaceDetection()) {

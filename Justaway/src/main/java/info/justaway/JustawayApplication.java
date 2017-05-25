@@ -5,11 +5,25 @@ import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.StrictMode;
 
+import org.acra.ACRA;
+import org.acra.ReportingInteractionMode;
+import org.acra.annotation.ReportsCrashes;
+
 import info.justaway.model.Relationship;
 import info.justaway.model.UserIconManager;
 import info.justaway.settings.BasicSettings;
 import info.justaway.settings.MuteSettings;
 import info.justaway.util.ImageUtil;
+
+@ReportsCrashes(
+        mode = ReportingInteractionMode.DIALOG,
+        mailTo = "nirvash@gmail.com",
+        resToastText = R.string.crash_toast_text,
+        resDialogText = R.string.crash_dialog_text,
+        resDialogIcon = android.R.drawable.ic_dialog_info,
+        resDialogTitle = R.string.crash_dialog_title,
+        resDialogCommentPrompt = R.string.crash_dialog_comment_prompt
+)
 
 public class JustawayApplication extends Application {
 
@@ -20,6 +34,7 @@ public class JustawayApplication extends Application {
     public void onCreate() {
         super.onCreate();
         sApplication = this;
+        ACRA.init(this);
 
         // Twitter4J の user stream の shutdown() で NetworkOnMainThreadException が発生してしまうことに対する暫定対応
         if (!BuildConfig.DEBUG) {
