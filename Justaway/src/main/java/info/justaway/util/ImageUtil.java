@@ -50,7 +50,8 @@ public class ImageUtil {
                 .Builder(JustawayApplication.getApplication())
                 .defaultDisplayImageOptions(defaultOptions)
                 .taskExecutor(executor)
-                .memoryCacheSize((int)Runtime.getRuntime().maxMemory() / 2)
+                .memoryCacheSizePercentage(30)
+                .discCacheSize(1024 * 1024 * 128)
                 .build();
 
         ImageLoader.getInstance().init(config);

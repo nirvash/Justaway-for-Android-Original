@@ -523,24 +523,30 @@ public class FaceCrop {
             return bitmap;
         }
 
-        float w = bitmap.getWidth();
-        float h = bitmap.getHeight();
-        float bitmapAspect = h / w;
+        try {
 
-        if (BasicSettings.isDebug()) {
-//            bitmap = drawFaceRegion(mRect, bitmap, mColor);
-            bitmap = drawFaceRegions(mRects, bitmap, mColor);
-        }
+            float w = bitmap.getWidth();
+            float h = bitmap.getHeight();
+            float bitmapAspect = h / w;
 
-        Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
-        if (bitmapAspect > aspect) {
-            r = addVPadding(r, bitmap, (int) (w * aspect));
-            Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, (int)w, r.height);
-            return resized;
-        } else {
-            r = addHPadding(r, bitmap, (int) (h / aspect));
-            Bitmap resized = Bitmap.createBitmap(bitmap, r.x, 0, r.width, (int)h);
-            return resized;
+            if (BasicSettings.isDebug()) {
+                //            bitmap = drawFaceRegion(mRect, bitmap, mColor);
+                bitmap = drawFaceRegions(mRects, bitmap, mColor);
+            }
+
+            Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+            if (bitmapAspect > aspect) {
+                r = addVPadding(r, bitmap, (int) (w * aspect));
+                Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, (int) w, r.height);
+                return resized;
+            } else {
+                r = addHPadding(r, bitmap, (int) (h / aspect));
+                Bitmap resized = Bitmap.createBitmap(bitmap, r.x, 0, r.width, (int) h);
+                return resized;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return bitmap;
         }
     }
 
