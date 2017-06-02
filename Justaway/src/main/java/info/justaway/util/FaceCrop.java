@@ -15,7 +15,6 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -48,8 +47,9 @@ public class FaceCrop {
     private int mColor = Color.MAGENTA;
     private boolean mIsFace = false;
 
-    private static CascadeClassifier sFaceDetector = null;
-    private static CascadeClassifier sFaceDetector2 = null;
+    private static CascadeClassifier sFaceDetectorAnimeFace = null;
+    private static CascadeClassifier sFaceDetectorFace = null;
+    private static CascadeClassifier sFaceDetectorAnimeProfileFace = null;
     private static CascadeClassifier sFaceDetector_Cat = null;
 
     private static Map<String, FaceCrop> sFaceInfoMap = new LinkedHashMap<String, FaceCrop>(100, 0.75f, true) {
@@ -62,11 +62,14 @@ public class FaceCrop {
     };
 
     public static void initFaceDetector(Context context) {
-        if (sFaceDetector == null) {
-            sFaceDetector = setupFaceDetector(context, "lbpcascade_animeface.xml", R.raw.lbpcascade_animeface);
+        if (sFaceDetectorAnimeFace == null) {
+            sFaceDetectorAnimeFace = setupFaceDetector(context, "lbpcascade_animeface.xml", R.raw.lbpcascade_animeface);
         }
-        if (sFaceDetector2 == null) {
-            sFaceDetector2 = setupFaceDetector(context, "lbpcascade_frontalface_improved.xml", R.raw.lbpcascade_frontalface_improved);
+        if (sFaceDetectorAnimeProfileFace == null) {
+            sFaceDetectorAnimeProfileFace = setupFaceDetector(context, "lbpcascade_animeprofileface.xml", R.raw.lbpcascade_animeprofileface);
+        }
+        if (sFaceDetectorFace == null) {
+            sFaceDetectorFace = setupFaceDetector(context, "lbpcascade_frontalface_improved.xml", R.raw.lbpcascade_frontalface_improved);
         }
         if (sFaceDetector_Cat == null) {
             sFaceDetector_Cat = setupFaceDetector(context, "lbpcascade_cat.xml", R.raw.lbpcascade_cat);
@@ -181,13 +184,15 @@ public class FaceCrop {
     }
 
     private class DetectorConf {
-        public DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color) {
+        public DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color, boolean flip, String tag) {
             this.detector = detector;
             this.angle = angle;
             this.scale = scale;
             this.neighbor = neighbor;
             this.size = size;
             this.color = color;
+            this.flip = flip;
+            this.tag = tag;
         }
         public CascadeClassifier detector;
         public double angle;
@@ -195,6 +200,8 @@ public class FaceCrop {
         public int neighbor;
         public Size size;
         public int color;
+        public boolean flip;
+        public String tag;
     }
 
 
@@ -204,25 +211,29 @@ public class FaceCrop {
         }
 
         if (!mIsFirst) {
+/*
             if (mColor == Color.MAGENTA || mColor == Color.GREEN) {
                 mColor = Color.GREEN;
             } else {
                 mColor = Color.CYAN;
             }
+*/
             return mRect;
         }
 
-        if (sFaceDetector == null) {
+        if (sFaceDetectorAnimeFace == null) {
             return mRect;
         }
 
         mIsFirst = false;
         DetectorConf[] confs = new DetectorConf[] {
-                new DetectorConf(sFaceDetector,   0, 1.09f, 3, new Size(40, 40), Color.MAGENTA),
-                new DetectorConf(sFaceDetector,  10, 1.09f, 3, new Size(40, 40), Color.MAGENTA),
-                new DetectorConf(sFaceDetector, -10, 1.09f, 3,  new Size(40, 40),Color.MAGENTA),
-                new DetectorConf(sFaceDetector2,   0, 1.09f, 3,  new Size(40, 40),Color.BLUE),
-                new DetectorConf(sFaceDetector_Cat,   0, 1.09f, 3, new Size(40, 40), Color.BLUE)
+                new DetectorConf(sFaceDetectorAnimeFace,   0, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, "A"),
+                new DetectorConf(sFaceDetectorAnimeFace,  10, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, "A10"),
+                new DetectorConf(sFaceDetectorAnimeFace, -10, 1.09f, 3,  new Size(40, 40),Color.MAGENTA, false, "A-10"),
+                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, false, "AP"),
+                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, true, "APF"),
+                new DetectorConf(sFaceDetectorFace,   0, 1.09f, 3,  new Size(40, 40),Color.BLUE, false, "F"),
+                new DetectorConf(sFaceDetector_Cat,   0, 1.09f, 3, new Size(40, 40), Color.BLUE, false, "C")
         };
 
         try {
@@ -266,6 +277,8 @@ public class FaceCrop {
             if (conf.angle != 0) {
                 Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth / 2, mHeight / 2), conf.angle, 1.0f);
                 Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
+            } else if (conf.flip) {
+                Core.flip(imageMat, rotMat, 1);
             } else {
                 rotMat = imageMat.clone();
             }
@@ -273,12 +286,12 @@ public class FaceCrop {
             conf.detector.detectMultiScale(rotMat, faces, conf.scale, conf.neighbor, 0, conf.size, new Size());
             Rect[] facesArray = faces.toArray();
 
-            if (conf.angle != 0 || scale != 1.0f) {
+            if (conf.angle != 0 || scale != 1.0f || conf.flip) {
                 // 回転復元
                 for (Rect r : facesArray) {
                     if (conf.angle != 0) {
                         Point inPoint = r.tl();
-                        Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), conf.angle);
+                        Point outPoint = rotatePoint(inPoint, new Point(mWidth * scale / 2, mHeight * scale / 2), conf.angle);
                         r.x = (int) outPoint.x;
                         r.y = (int) outPoint.y;
                     }
@@ -287,6 +300,10 @@ public class FaceCrop {
                         r.y /= scale;
                         r.width /= scale;
                         r.height /= scale;
+                    }
+                    // 左右反転復元
+                    if (conf.flip) {
+                        r.x = (int)(mWidth * scale) - r.x - r.width;
                     }
                 }
             }
@@ -558,14 +575,14 @@ public class FaceCrop {
         mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
         if (mIsFirst) {
             mIsFirst = false;
-            if (sFaceDetector != null) {
+            if (sFaceDetectorAnimeFace != null) {
                 MatOfRect faces = new MatOfRect();
                 Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
                 Utils.bitmapToMat(bitmap, imageMat);
                 Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
                 Imgproc.equalizeHist(imageMat, imageMat);
 
-                sFaceDetector.detectMultiScale(imageMat, faces, 1.1f, 3, 0, new Size(300 / 5, 300 / 5), new Size());
+                sFaceDetectorAnimeFace.detectMultiScale(imageMat, faces, 1.1f, 3, 0, new Size(300 / 5, 300 / 5), new Size());
                 Rect[] facesArray = faces.toArray();
                 if (facesArray.length > 0) {
                     Rect r = getLargestFace(facesArray);
