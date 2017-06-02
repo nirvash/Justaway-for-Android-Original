@@ -12,7 +12,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.drawable.GradientDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -22,6 +28,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.RemoteInput;
 import android.support.v4.content.ContextCompat;
 import android.text.Editable;
+import android.text.Layout;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.view.ContextMenu;
@@ -36,6 +43,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
@@ -566,7 +574,10 @@ public class PostActivity extends FragmentActivity {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             ImageView imageView = (ImageView) getLayoutInflater().inflate(R.layout.image_preview, null);
-            imageView.setTag(FileUtil.writeToTempFile(getCacheDir(), inputStream));
+            File tmpFile = FileUtil.writeToTempFile(getCacheDir(), inputStream);
+            imageView.setTag(tmpFile);
+            imageView.setAdjustViewBounds(true);
+            //imageView.setAdjustViewBounds(true);
 
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -581,7 +592,12 @@ public class PostActivity extends FragmentActivity {
                 }
             });
             imageView.setImageURI(uri);
-            mImagePreviewContainer.addView(imageView);
+
+            // Get orientation
+            int orientation = setOrientation(imageView, tmpFile);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
+
+            mImagePreviewContainer.addView(imageView, lp);
             if (mStatusText.getText() != null) {
                 updateCount(mStatusText.getText().toString());
             }
@@ -590,12 +606,45 @@ public class PostActivity extends FragmentActivity {
                 mImgButton.setEnabled(false);
                 return;
             }
-            MessageUtil.showToast(R.string.toast_set_image_success);
+            String text = getResources().getString(R.string.toast_set_image_success) + ", " + orientation;
+            MessageUtil.showToast(text);
             mTweetButton.setEnabled(true);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
+
+    private int setOrientation(ImageView view, File file) {
+        int orientation = ExifInterface.ORIENTATION_NORMAL;
+        ExifInterface exifInterface = null;
+        Bitmap bitmap = null;
+        try {
+            exifInterface = new ExifInterface(file.getPath());
+            orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            bitmap = BitmapFactory.decodeFile(file.getPath());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return orientation;
+        }
+
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                view.setRotation(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                view.setRotation(180);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                view.setRotation(270);
+                break;
+            default:
+                return orientation; // NOP
+        }
+        bitmap.recycle();
+
+        return orientation;
+    }
+
 
     private void updateCount(String str) {
         int textColor;

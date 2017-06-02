@@ -84,7 +84,7 @@
                 android:id="@+id/image_preview_container"
                 android:layout_alignParentBottom="true"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
+                android:layout_height="128dp"
                 android:layout_margin="16dp"
                 android:orientation="horizontal"/>
         </RelativeLayout>

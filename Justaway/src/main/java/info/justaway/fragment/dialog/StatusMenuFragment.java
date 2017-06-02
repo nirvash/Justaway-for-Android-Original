@@ -48,6 +48,7 @@ import twitter4j.URLEntity;
 import twitter4j.User;
 import twitter4j.UserMentionEntity;
 
+@SuppressWarnings("deprecation")
 public class StatusMenuFragment extends DialogFragment {
 
     private FragmentActivity mActivity;
