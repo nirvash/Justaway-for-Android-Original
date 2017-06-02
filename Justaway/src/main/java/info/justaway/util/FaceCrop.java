@@ -289,21 +289,21 @@ public class FaceCrop {
             if (conf.angle != 0 || scale != 1.0f || conf.flip) {
                 // 回転復元
                 for (Rect r : facesArray) {
-                    if (conf.angle != 0) {
-                        Point inPoint = r.tl();
-                        Point outPoint = rotatePoint(inPoint, new Point(mWidth * scale / 2, mHeight * scale / 2), conf.angle);
-                        r.x = (int) outPoint.x;
-                        r.y = (int) outPoint.y;
-                    }
                     if (scale != 1.0f) {
                         r.x /= scale;
                         r.y /= scale;
                         r.width /= scale;
                         r.height /= scale;
                     }
+                    if (conf.angle != 0) {
+                        Point inPoint = r.tl();
+                        Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), conf.angle);
+                        r.x = (int) outPoint.x;
+                        r.y = (int) outPoint.y;
+                    }
                     // 左右反転復元
                     if (conf.flip) {
-                        r.x = (int)(mWidth * scale) - r.x - r.width;
+                        r.x = (int)mWidth - r.x - r.width;
                     }
                 }
             }
