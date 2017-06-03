@@ -275,7 +275,7 @@ public class FaceCrop {
 
             // 回転
             if (conf.angle != 0) {
-                Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth / 2, mHeight / 2), conf.angle, 1.0f);
+                Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth * scale / 2, mHeight * scale / 2), conf.angle, 1.0f);
                 Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
             } else if (conf.flip) {
                 Core.flip(imageMat, rotMat, 1);
@@ -283,6 +283,9 @@ public class FaceCrop {
                 rotMat = imageMat.clone();
             }
 
+
+            Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
+            Log.d(TAG, String.format("rotMat: (%d, %d) : angle %s", rotMat.cols(), rotMat.rows() , conf.angle));
             conf.detector.detectMultiScale(rotMat, faces, conf.scale, conf.neighbor, 0, conf.size, new Size());
             Rect[] facesArray = faces.toArray();
 
@@ -297,7 +300,12 @@ public class FaceCrop {
                     }
                     if (conf.angle != 0) {
                         Point inPoint = r.tl();
-                        Point outPoint = rotatePoint(inPoint, new Point(mWidth / 2, mHeight / 2), conf.angle);
+                        inPoint.x += r.width / 2;
+                        inPoint.y += r.height / 2;
+                        Log.d(TAG, String.format("face area org: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
+                        Point outPoint = rotatePoint(inPoint, new Point(mWidth/2, mHeight/2), conf.angle);
+                        outPoint.x -= r.width / 2;
+                        outPoint.y -= r.height / 2;
                         r.x = (int) outPoint.x;
                         r.y = (int) outPoint.y;
                     }
@@ -310,7 +318,6 @@ public class FaceCrop {
 
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
-                Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
                 Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
                 mRect = r;
                 mRects.clear();
@@ -318,7 +325,7 @@ public class FaceCrop {
                 mIsFace = true;
                 mIsSuccess = true;
                 if (conf.angle != 0) {
-                    mColor = Color.YELLOW;
+                    mColor = Color.rgb(255, 153, 0);
                 }
             }
         } catch (Exception e) {
