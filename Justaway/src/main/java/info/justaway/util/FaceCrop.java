@@ -273,7 +273,7 @@ public class FaceCrop {
             MatOfRect faces = new MatOfRect();
             Mat rotMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
 
-            // 回転
+            // 回転 (今のところ回転と左右反転は同時につかえない)
             if (conf.angle != 0) {
                 Mat rot = Imgproc.getRotationMatrix2D(new Point(mWidth * scale / 2, mHeight * scale / 2), conf.angle, 1.0f);
                 Imgproc.warpAffine(imageMat, rotMat, rot, imageMat.size());
@@ -658,7 +658,8 @@ public class FaceCrop {
         Rect ret = null;
         int maxSize = -1;
         for (Rect r : facesArray) {
-            int size = r.width * r.height;
+            double yweight = 1.0f + ((mHeight - r.y) / mHeight * 5.0f); // 上にある領域を優先
+            int size = (int)(r.width * r.height * yweight * yweight);
             if (size > maxSize) {
                 ret = r;
                 maxSize = size;

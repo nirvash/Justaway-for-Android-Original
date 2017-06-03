@@ -125,7 +125,8 @@ public class ImageUtil {
 
         if (cropByAspect || !entry.isFaceDetected()) {
             if (entry.isFaceDetected()) {
-                image = entry.faceCrop.drawRegion(image);
+//                image = entry.faceCrop.drawRegion(image);
+                image = entry.faceCrop.cropFace(image, viewAspect);
             }
             float w = image.getWidth();
             float h = image.getHeight();
