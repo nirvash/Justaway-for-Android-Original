@@ -388,8 +388,9 @@ public class LoadImageTask implements Runnable {
         boolean isLeft = true;
         for (LinearLayout view : views) {
             view.setOrientation(LinearLayout.VERTICAL);
+            // LinearLayout の weight は各子要素の幅の合計 - 親の幅の差分を weight で配分なので、純粋に割合で割り当てたいときはh場を 0　にしておけばよい
             LinearLayout.LayoutParams layoutParams =
-                    new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, maxHeight, 1.0f);
+                    new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
             if (isLeft) {
                 isLeft = false;
                 layoutParams.setMargins(0, 0, 10, 0);
