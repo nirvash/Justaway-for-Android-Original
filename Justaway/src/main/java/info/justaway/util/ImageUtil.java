@@ -95,16 +95,17 @@ public class ImageUtil {
                 if (!BasicSettings.enableFaceDetection()) {
                     return;
                 }
+                BitmapWrapper wrapper = new BitmapWrapper(image, false);
                 int maxHeight = 400;
                 ImageView imageView = (ImageView) view;
                 if (imageView != null) {
-                    float w = image.getWidth();
-                    float h = image.getHeight();
+                    float w = wrapper.getWidth();
+                    float h = wrapper.getHeight();
                     FaceCrop faceCrop = FaceCrop.get(imageUri, maxHeight, w, h);
                     if (faceCrop != null && faceCrop.isSuccess()) {
-                        Bitmap cropImage = faceCrop != null ? faceCrop.drawRegion(image) : null;
+                        BitmapWrapper cropImage = faceCrop != null ? faceCrop.drawRegion(wrapper) : null;
                         if (cropImage != null) {
-                            imageView.setImageBitmap(cropImage);
+                            imageView.setImageBitmap(cropImage.getBitmap());
                         }
                     }
                 }
@@ -120,12 +121,11 @@ public class ImageUtil {
 
     // レイアウトが後用
     public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect, float viewHeight, float viewWidth) {
-        Bitmap image = entry.bitmap;
+        BitmapWrapper image = new BitmapWrapper(entry.bitmap, false);
         float viewAspect = viewHeight / viewWidth;
 
         if (cropByAspect || !entry.isFaceDetected()) {
             if (entry.isFaceDetected()) {
-//                image = entry.faceCrop.drawRegion(image);
                 image = entry.faceCrop.cropFace(image, viewAspect);
             }
             float w = image.getWidth();
@@ -138,7 +138,7 @@ public class ImageUtil {
                 } else {
 
                 }
-                imageView.setImageBitmap(image);
+                imageView.setImageBitmap(image.getBitmap());
                 return;
             } else if (w > 0 && h / w > 300.0f / 600.0f && h > viewHeight) {
                 // 縦長のときは上側フォーカスでクロップ
@@ -148,7 +148,8 @@ public class ImageUtil {
                 float rate = h / w > 1.5f ? 0.4f : 0.6f;
                 int height = (int)(h * rate);
                 if (height  / w > viewHeight / viewWidth) {
-                    Bitmap resized = Bitmap.createBitmap(image, 0, 0, (int) w, height);
+                    Bitmap resized = Bitmap.createBitmap(image.getBitmap(), 0, 0, (int) w, height);
+                    image.recycle();
                     imageView.setImageBitmap(resized);
                     return;
                 }
@@ -166,20 +167,21 @@ public class ImageUtil {
                 }
 
                 if (rate < 1.2f) {
-                    Bitmap resized = Bitmap.createScaledBitmap(image, (int) (w * rate), (int) (h * rate), true);
+                    Bitmap resized = Bitmap.createScaledBitmap(image.getBitmap(), (int) (w * rate), (int) (h * rate), true);
+                    image.recycle();
                     imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     imageView.setImageBitmap(resized);
                 } else {
-                    imageView.setImageBitmap(image);
+                    imageView.setImageBitmap(image.getBitmap());
                 }
             } else {
-                imageView.setImageBitmap(image);
+                imageView.setImageBitmap(image.getBitmap());
             }
         } else if (entry.faceCrop != null) {
             image = entry.faceCrop.cropFace(image, viewAspect);
-            imageView.setImageBitmap(image);
+            imageView.setImageBitmap(image.getBitmap());
         } else {
-            imageView.setImageBitmap(image);
+            imageView.setImageBitmap(image.getBitmap());
         }
     }
 

@@ -133,16 +133,16 @@ public class FaceCrop {
         this.mHeight = h;
     }
 
-    private static Bitmap drawFaceRegion(Rect rect, Bitmap image, int color) {
+    private static BitmapWrapper drawFaceRegions(List<Rect> rects, BitmapWrapper image, int color) {
         try {
-            Bitmap result = image.copy(Bitmap.Config.ARGB_8888, true);
+            BitmapWrapper result = new BitmapWrapper(image.getBitmap().copy(Bitmap.Config.ARGB_8888, true), true);
             Paint paint = new Paint();
             paint.setColor(color);
             paint.setStrokeWidth(4);
             paint.setStyle(Paint.Style.STROKE);
 
-            Canvas canvas = new Canvas(result);
-            if (rect != null) {
+            Canvas canvas = new Canvas(result.getBitmap());
+            for (Rect rect : rects) {
                 canvas.drawRect(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, paint);
             }
             return result;
@@ -171,11 +171,9 @@ public class FaceCrop {
         }
     }
 
-
-    public Bitmap drawRegion(Bitmap bitmap) {
+    public BitmapWrapper drawRegion(BitmapWrapper bitmap) {
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
-//                bitmap = drawFaceRegion(mRect, bitmap, Color.GREEN);
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
                 return bitmap;
             }
@@ -542,11 +540,10 @@ public class FaceCrop {
         return mRect;
     }
 
-    public Bitmap cropFace(Bitmap bitmap, float aspect) {
+    public BitmapWrapper cropFace(BitmapWrapper bitmap, float aspect) {
         if (!mIsSuccess) {
             return bitmap;
         }
-
         try {
 
             float w = bitmap.getWidth();
@@ -554,65 +551,24 @@ public class FaceCrop {
             float bitmapAspect = h / w;
 
             if (BasicSettings.isDebug()) {
-                //            bitmap = drawFaceRegion(mRect, bitmap, mColor);
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
             }
 
             Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
             if (bitmapAspect > aspect) {
-                r = addVPadding(r, bitmap, (int) (w * aspect));
-                Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, (int) w, r.height);
-                return resized;
+                r = addVPadding(r, bitmap.getBitmap(), (int) (w * aspect));
+                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), 0, r.y, (int) w, r.height);
+                bitmap.setBitmap(resized, true);
+                return bitmap;
             } else {
-                r = addHPadding(r, bitmap, (int) (h / aspect));
-                Bitmap resized = Bitmap.createBitmap(bitmap, r.x, 0, r.width, (int) h);
-                return resized;
+                r = addHPadding(r, bitmap.getBitmap(), (int) (h / aspect));
+                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), r.x, 0, r.width, (int) h);
+                bitmap.setBitmap(resized, true);
+                return bitmap;
             }
         } catch (Exception e) {
             e.printStackTrace();
             return bitmap;
-        }
-    }
-
-    public Bitmap invoke(Bitmap bitmap) {
-        if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0) {
-            return bitmap;
-        }
-
-        mColor = mIsFirst ? Color.MAGENTA : Color.GREEN;
-        if (mIsFirst) {
-            mIsFirst = false;
-            if (sFaceDetectorAnimeFace != null) {
-                MatOfRect faces = new MatOfRect();
-                Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-                Utils.bitmapToMat(bitmap, imageMat);
-                Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
-                Imgproc.equalizeHist(imageMat, imageMat);
-
-                sFaceDetectorAnimeFace.detectMultiScale(imageMat, faces, 1.1f, 3, 0, new Size(300 / 5, 300 / 5), new Size());
-                Rect[] facesArray = faces.toArray();
-                if (facesArray.length > 0) {
-                    Rect r = getLargestFace(facesArray);
-                    Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
-                    Log.d(TAG, String.format("face area: (%d, %d, %d, %d)", r.x, r.y, r.width, r.height));
-                    mRect = r;
-                    mRects.clear();
-                    Collections.addAll(mRects, facesArray);
-                    mIsSuccess = true;
-                }
-            }
-        }
-
-        if (mIsSuccess) {
-            if (BasicSettings.isDebug()) {
-                bitmap = drawFaceRegion(mRect, bitmap, mColor);
-            }
-            Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
-            r = addVPadding(r, bitmap, mMaxHeight);
-            Bitmap resized = Bitmap.createBitmap(bitmap, 0, r.y, (int) mWidth, r.height);
-            return resized;
-        } else {
-            return null;
         }
     }
 
