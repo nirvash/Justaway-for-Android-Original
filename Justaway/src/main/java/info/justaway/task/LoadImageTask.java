@@ -207,11 +207,13 @@ public class LoadImageTask implements Runnable {
             return;
         }
 
-        if (layoutFourThumbnailsSpecial()) {
+        if (layoutFourThumbnailsThreeColumns()) {
             return;
         }
 
-        // TODO : 3枚で 2,1 みたいなレイアウト
+        if (layoutFourThumbnailsTwoColumns()) {
+            return;
+        }
 
         layoutThumbnailsHorizontal();
     }
@@ -280,8 +282,8 @@ public class LoadImageTask implements Runnable {
     }
 
     // 縦2 を含む4枚レイアウト
-    private boolean layoutFourThumbnailsSpecial() {
-        if (mBitmaps.size() <= 3) {
+    private boolean layoutFourThumbnailsThreeColumns() {
+        if (mBitmaps.size() != 4) {
             return false;
         }
 
@@ -358,6 +360,94 @@ public class LoadImageTask implements Runnable {
             }
 
             float viewWidth = viewSize.x * 0.8f * 0.33f;
+
+            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
+
+            setClickListener(index, image);
+            index++;
+        }
+
+        return true;
+    }
+
+
+    // 縦2 を含む3枚レイアウト
+    // TODO: パラメータ抽出して ThreeColums と統合したい
+    private boolean layoutFourThumbnailsTwoColumns() {
+        if (mBitmaps.size() != 3) {
+            return false;
+        }
+
+        int pairPosition = -1;
+        // TODO: 3枚とも Landscape の場合はどうする?
+        if (mBitmaps.get(0).isLandscape() && mBitmaps.get(1).isLandscape()) {
+            pairPosition = 0;
+        } else if (mBitmaps.get(1).isLandscape() && mBitmaps.get(2).isLandscape()) {
+            pairPosition = 1;
+        } else {
+            return false;
+        }
+
+        int maxHeight = mHeight;
+        Point viewSize = ImageUtil.getDisplaySize();
+
+        // タイルレイアウト
+        LinearLayout view = new LinearLayout(mContext);
+        view.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams layoutParams2 =
+                new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
+
+        if (pairPosition == 0) {
+            layoutParams2.setMargins(0, 0, 5, 0);
+        } else {
+            layoutParams2.setMargins(5, 0, 0, 0);
+        }
+        view.setLayoutParams(layoutParams2);
+        view.setMinimumHeight(maxHeight);
+
+        int index = 0;
+        int height = (maxHeight - 10) / 2;
+        for (final Result entry : mBitmaps) {
+            RoundedImageView image = getRoundedImageView();
+            image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+            LinearLayout.LayoutParams layoutParams = null;
+            float viewHeight = maxHeight;
+
+            if (pairPosition == index || pairPosition + 1 == index) {
+                layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+                image.setMaxHeight(height);
+                image.setMinimumHeight(height);
+                viewHeight = height;
+            } else {
+                layoutParams = new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
+                image.setMaxHeight(maxHeight);
+                image.setMinimumHeight(maxHeight);
+            }
+            layoutParams.gravity = Gravity.CENTER_VERTICAL;
+
+            if (pairPosition == index) {
+                layoutParams.setMargins(0, 0, 0, 10);
+            } else if (pairPosition + 1 == index) {
+                // NOP
+            } else if (index == 0) {
+                layoutParams.setMargins(0, 0, 5, 0);
+            } else if (index == 2) {
+                layoutParams.setMargins(5, 0, 0, 0);
+            } else {
+                layoutParams.setMargins(5, 0, 5, 0);
+            }
+
+            if (pairPosition == index || pairPosition + 1 == index) {
+                view.addView(image, layoutParams);
+            } else {
+                mViewGroup.addView(image, layoutParams);
+            }
+            if (pairPosition == index) {
+                mViewGroup.addView(view);
+            }
+
+            float viewWidth = viewSize.x * 0.8f * 0.5f;
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
 
