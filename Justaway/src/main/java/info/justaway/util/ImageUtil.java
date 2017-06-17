@@ -250,13 +250,6 @@ public class ImageUtil {
         final String videoUrl = StatusUtil.getVideoUrl(status);
         play.setVisibility(videoUrl.isEmpty() ? View.GONE : View.VISIBLE);
 
-        String newTag = new Long(status.getId()).toString();
-        String tag = (String) viewGroup.getTag();
-        if (tag != null && tag.equals(newTag)) {
-            return;
-        }
-        viewGroup.setTag(newTag);
-
         // ツイートに含まれる画像のURLをすべて取得
         final ArrayList<String> imageUrls = StatusUtil.getImageUrls(status);
 
@@ -277,8 +270,13 @@ public class ImageUtil {
 
             new LoadImageTask(status, imageUrls, !viaGranblueFantasy, imageHeight, viewGroup, wrapperViewGroup, context).execute();
         } else {
-            viewGroup.setVisibility(View.GONE);
-            wrapperViewGroup.setVisibility(View.GONE);
+            hideImageContainer(viewGroup, wrapperViewGroup);
         }
+    }
+
+    public static void hideImageContainer(ViewGroup viewGroup, ViewGroup wrapperViewGroup) {
+        viewGroup.removeAllViews();
+        viewGroup.setVisibility(View.GONE);
+        wrapperViewGroup.setVisibility(View.GONE);
     }
 }

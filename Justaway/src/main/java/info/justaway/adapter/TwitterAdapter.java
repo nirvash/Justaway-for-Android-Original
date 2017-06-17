@@ -401,7 +401,8 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
         holder.mStatus.setBackgroundColor(Color.TRANSPARENT);
         holder.mStatus.setVisibility(View.VISIBLE);
-
+        ImageUtil.hideImageContainer(holder.mImagesContainer, holder.mImagesContainerWrapper);
+        ImageUtil.hideImageContainer(holder.mQuotedImagesContainer, holder.mQuotedImagesContainerWrapper);
 
         // 表示すべきデータの取得
         Row row = getItem(position);
@@ -418,8 +419,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                 return view;
             }
 
-            String oldTag = (String) holder.mImagesContainer.getTag();
-            Log.d(TAG, String.format("renderStatus: %s, %s, %d", oldTag, status.getId(), position ));
+            Log.d(TAG, String.format("renderStatus: %s, %d", status.getId(), position ));
 
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {
@@ -687,8 +687,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             if (BasicSettings.getDisplayThumbnailOn()) {
                 ImageUtil.displayThumbnailImages(mContext, holder.mQuotedImagesContainer, holder.mImagesContainerWrapper, holder.mQuotedPlay, quotedStatus);
             } else {
-                holder.mQuotedImagesContainer.setVisibility(View.GONE);
-                holder.mQuotedImagesContainerWrapper.setVisibility(View.GONE);
+                ImageUtil.hideImageContainer(holder.mQuotedImagesContainer, holder.mQuotedImagesContainerWrapper);
             }
             holder.mQuotedTweet.setVisibility(View.VISIBLE);
         } else {
@@ -699,8 +698,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         if (BasicSettings.getDisplayThumbnailOn()) {
             ImageUtil.displayThumbnailImages(mContext, holder.mImagesContainer, holder.mImagesContainerWrapper, holder.mPlay, status);
         } else {
-            holder.mImagesContainer.setVisibility(View.GONE);
-            holder.mImagesContainerWrapper.setVisibility(View.GONE);
+            ImageUtil.hideImageContainer(holder.mImagesContainer, holder.mImagesContainerWrapper);
         }
 
 
