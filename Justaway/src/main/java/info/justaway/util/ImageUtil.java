@@ -50,7 +50,7 @@ public class ImageUtil {
                 .Builder(JustawayApplication.getApplication())
                 .defaultDisplayImageOptions(defaultOptions)
                 .taskExecutor(executor)
-                .memoryCacheSizePercentage(30)
+                .memoryCacheSizePercentage(20)
                 .discCacheSize(1024 * 1024 * 128)
                 .build();
 
@@ -274,8 +274,22 @@ public class ImageUtil {
         }
     }
 
-    public static void hideImageContainer(ViewGroup viewGroup, ViewGroup wrapperViewGroup) {
+    private static void clearImagesInLayout(ViewGroup viewGroup) {
+        for (int i=0; i < viewGroup.getChildCount(); i++) {
+            View v = viewGroup.getChildAt(i);
+            if (v instanceof ImageView) {
+                ImageView image = (ImageView) v;
+                image.setImageBitmap(null);
+            } else if (v instanceof ViewGroup) {
+                ViewGroup childViewGroup = (ViewGroup) v;
+                clearImagesInLayout(childViewGroup);
+            }
+        }
         viewGroup.removeAllViews();
+    }
+
+    public static void hideImageContainer(ViewGroup viewGroup, ViewGroup wrapperViewGroup) {
+        clearImagesInLayout(viewGroup);
         viewGroup.setVisibility(View.GONE);
         wrapperViewGroup.setVisibility(View.GONE);
     }
