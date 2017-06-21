@@ -378,6 +378,10 @@ public class LoadImageTask implements Runnable {
             return false;
         }
 
+        float columnWeight = 0.5f;
+        int START_INDEX = 0;
+        int END_INDEX = 2;
+
         int pairPosition = -1;
         // TODO: 3枚とも Landscape の場合はどうする?
         if (mBitmaps.get(0).isLandscape() && mBitmaps.get(1).isLandscape()) {
@@ -397,9 +401,9 @@ public class LoadImageTask implements Runnable {
         LinearLayout.LayoutParams layoutParams2 =
                 new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
 
-        if (pairPosition == 0) {
+        if (pairPosition == START_INDEX) {
             layoutParams2.setMargins(0, 0, 5, 0);
-        } else {
+        } else if (pairPosition + 1 == END_INDEX) {
             layoutParams2.setMargins(5, 0, 0, 0);
         }
         view.setLayoutParams(layoutParams2);
@@ -427,18 +431,21 @@ public class LoadImageTask implements Runnable {
             layoutParams.gravity = Gravity.CENTER_VERTICAL;
 
             if (pairPosition == index) {
+                // 2段組みの上側
                 layoutParams.setMargins(0, 0, 0, 10);
             } else if (pairPosition + 1 == index) {
+                // 2段組みの下側
                 // NOP
-            } else if (index == 0) {
+            } else if (index == START_INDEX) {
                 layoutParams.setMargins(0, 0, 5, 0);
-            } else if (index == 2) {
+            } else if (index == END_INDEX) {
                 layoutParams.setMargins(5, 0, 0, 0);
             } else {
                 layoutParams.setMargins(5, 0, 5, 0);
             }
 
             if (pairPosition == index || pairPosition + 1 == index) {
+                // 2段組み
                 view.addView(image, layoutParams);
             } else {
                 mViewGroup.addView(image, layoutParams);
@@ -447,7 +454,7 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(view);
             }
 
-            float viewWidth = viewSize.x * 0.8f * 0.5f;
+            float viewWidth = viewSize.x * 0.8f * columnWeight;
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
 
