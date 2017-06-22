@@ -26,6 +26,8 @@ dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
     compile project(':openCVLibrary320')
     compile 'ch.acra:acra:4.9.2'
+    compile 'com.deploygate:sdk:3.1.1'
+
 }
 
 android {
