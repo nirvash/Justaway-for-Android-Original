@@ -431,6 +431,9 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {
+                Long id = status.getId();
+                holder.mImagesContainer.setTag(id);
+                holder.mQuotedImagesContainer.setTag(id);
                 renderStatus(holder, row, status, null, row.getSource());
             } else if (retweet == null) {
                 Long id = status.getId();
