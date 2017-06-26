@@ -18,6 +18,8 @@ import com.nostra13.universalimageloader.core.assist.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.assist.MemoryCacheUtil;
 import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
+import org.opencv.core.Rect;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -119,14 +121,58 @@ public class ImageUtil {
         }
     }
 
+
+
+
+    // Widget の大きさに合わせてクロップを行う
+    private static BitmapWrapper cropImage(BitmapWrapper bitmap, int width, int height) {
+        int imageWidth = (int)bitmap.getWidth();
+        int imageHeight = (int)bitmap.getHeight();
+
+        if (width == 0 || height == 0) {
+            return bitmap;
+        }
+
+        Rect srcRect = new Rect(0, 0, imageWidth, imageHeight);
+        if ((float)imageWidth  / (float)imageHeight > (float)width / (float)height) {
+            int w = imageHeight * width / height;
+            if (w < imageWidth) {
+                srcRect.width = w;
+                int diff = imageWidth - w;
+                srcRect.x += diff / 2;
+            } else {
+                return bitmap;
+            }
+        } else {
+            int h = imageWidth * height / width;
+            if (h < imageHeight) {
+                srcRect.height = h;
+                int diff = imageHeight - h;
+                srcRect.y += diff / 2;
+            } else {
+                return bitmap;
+            }
+        }
+
+        Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), srcRect.x, srcRect.y, srcRect.width, srcRect.height);
+        bitmap.recycle();
+        Bitmap scaled = Bitmap.createScaledBitmap(cropped,  width, height, true);
+        cropped.recycle();
+        return new BitmapWrapper(scaled, true);
+    }
+
     // レイアウトが後用
-    public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect, float viewHeight, float viewWidth) {
+    public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect, float viewHeight, float viewWidth, int nImages) {
         BitmapWrapper image = new BitmapWrapper(entry.bitmap, false);
         float viewAspect = viewHeight / viewWidth;
 
         if (cropByAspect || !entry.isFaceDetected()) {
             if (entry.isFaceDetected()) {
-                image = entry.faceCrop.cropFace(image, viewAspect);
+                if (nImages > 1) {
+                    image = entry.faceCrop.cropFace2(image, (int) viewWidth, (int) viewHeight);
+                } else {
+                    image = entry.faceCrop.cropFace(image, viewAspect);
+                };
             }
             float w = image.getWidth();
             float h = image.getHeight();
@@ -178,7 +224,11 @@ public class ImageUtil {
                 imageView.setImageBitmap(image.getBitmap());
             }
         } else if (entry.faceCrop != null) {
-            image = entry.faceCrop.cropFace(image, viewAspect);
+            if (nImages > 1) {
+                image = entry.faceCrop.cropFace2(image, (int) viewWidth, (int) viewHeight);
+            } else {
+                image = entry.faceCrop.cropFace(image, viewAspect);
+            }
             imageView.setImageBitmap(image.getBitmap());
         } else {
             imageView.setImageBitmap(image.getBitmap());
