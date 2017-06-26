@@ -5,6 +5,8 @@ import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.StrictMode;
 
+import com.deploygate.sdk.DeployGate;
+
 import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
@@ -33,6 +35,8 @@ public class JustawayApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        DeployGate.install(this);
+
         sApplication = this;
         ACRA.init(this);
 

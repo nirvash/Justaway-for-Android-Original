@@ -184,12 +184,12 @@ public class LoadImageTask implements Runnable {
     }
 
     protected void onPostExecute() {
-        // 同じ項目の View が再利用されるケースはほとんどない様子だが
-        String tag = (String) mViewGroup.getTag();
-        String oldTag = new Long(mStatus.getId()).toString();
-        if (!TextUtils.isEmpty(tag) && !tag.equals(oldTag)) {
+        // 元の ListItem が別の項目の表示に使われていないかのチェック
+        Long id  = (Long) mViewGroup.getTag();
+        Long oldId = mStatus.getId();
+        if (id == null || !id.equals(oldId)) {
             // 既に List が他のアイテム用に再利用されている
-            Log.w(TAG, String.format("onPostExecute: tag is not match: %s, %s", tag, oldTag));
+            Log.w(TAG, String.format("onPostExecute: tag is not match: %d, %d", id, oldId));
             return;
         }
 
@@ -267,12 +267,11 @@ public class LoadImageTask implements Runnable {
 
             float viewHeight = mHeight;
             float viewWidth = viewSize.x * 0.8f / mUrls.size();
-            int nImages = mUrls.size();
 
             if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
-                ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
+                ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
             } else {
-                ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth, nImages);
+                ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth);
             }
 
             setClickListener(index, image);
@@ -361,9 +360,8 @@ public class LoadImageTask implements Runnable {
             }
 
             float viewWidth = viewSize.x * 0.8f * 0.33f;
-            int nImages = mUrls.size();
 
-            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
+            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
 
             setClickListener(index, image);
             index++;
@@ -379,6 +377,10 @@ public class LoadImageTask implements Runnable {
         if (mBitmaps.size() != 3) {
             return false;
         }
+
+        float columnWeight = 0.5f;
+        int START_INDEX = 0;
+        int END_INDEX = 2;
 
         int pairPosition = -1;
         // TODO: 3枚とも Landscape の場合はどうする?
@@ -399,9 +401,9 @@ public class LoadImageTask implements Runnable {
         LinearLayout.LayoutParams layoutParams2 =
                 new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
 
-        if (pairPosition == 0) {
+        if (pairPosition == START_INDEX) {
             layoutParams2.setMargins(0, 0, 5, 0);
-        } else {
+        } else if (pairPosition + 1 == END_INDEX) {
             layoutParams2.setMargins(5, 0, 0, 0);
         }
         view.setLayoutParams(layoutParams2);
@@ -429,18 +431,21 @@ public class LoadImageTask implements Runnable {
             layoutParams.gravity = Gravity.CENTER_VERTICAL;
 
             if (pairPosition == index) {
+                // 2段組みの上側
                 layoutParams.setMargins(0, 0, 0, 10);
             } else if (pairPosition + 1 == index) {
+                // 2段組みの下側
                 // NOP
-            } else if (index == 0) {
+            } else if (index == START_INDEX) {
                 layoutParams.setMargins(0, 0, 5, 0);
-            } else if (index == 2) {
+            } else if (index == END_INDEX) {
                 layoutParams.setMargins(5, 0, 0, 0);
             } else {
                 layoutParams.setMargins(5, 0, 5, 0);
             }
 
             if (pairPosition == index || pairPosition + 1 == index) {
+                // 2段組み
                 view.addView(image, layoutParams);
             } else {
                 mViewGroup.addView(image, layoutParams);
@@ -451,6 +456,7 @@ public class LoadImageTask implements Runnable {
 
             float viewWidth = viewSize.x * 0.8f * 0.5f;
             int nImages = mUrls.size();
+            float viewWidth = viewSize.x * 0.8f * columnWeight;
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
 

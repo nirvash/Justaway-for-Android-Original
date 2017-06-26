@@ -384,7 +384,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                 return null;
             }
             holder = new ViewHolder(view);
-            holder.mStatus.setTag(12);
+            holder.mStatus.setTag(12); // fontsize
             view.setTag(holder);
         } else {
             holder = (ViewHolder) view.getTag();
@@ -401,17 +401,24 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
 
         holder.mStatus.setBackgroundColor(Color.TRANSPARENT);
         holder.mStatus.setVisibility(View.VISIBLE);
+
         ImageUtil.hideImageContainer(holder.mImagesContainer, holder.mImagesContainerWrapper);
         ImageUtil.hideImageContainer(holder.mQuotedImagesContainer, holder.mQuotedImagesContainerWrapper);
 
         // 表示すべきデータの取得
         Row row = getItem(position);
 
+
         if (row.isDirectMessage()) {
             DirectMessage message = row.getMessage();
             if (message == null) {
                 return view;
             }
+
+            Long id = message.getId();
+            holder.mImagesContainer.setTag(id);
+            holder.mQuotedImagesContainer.setTag(id);
+
             renderMessage(holder, message);
         } else {
             Status status = row.getStatus();
@@ -419,14 +426,24 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
                 return view;
             }
 
+
             Log.d(TAG, String.format("renderStatus: %s, %d", status.getId(), position ));
 
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {
+                Long id = status.getId();
+                holder.mImagesContainer.setTag(id);
+                holder.mQuotedImagesContainer.setTag(id);
                 renderStatus(holder, row, status, null, row.getSource());
             } else if (retweet == null) {
+                Long id = status.getId();
+                holder.mImagesContainer.setTag(id);
+                holder.mQuotedImagesContainer.setTag(id);
                 renderStatus(holder, row, status, null, null);
             } else {
+                Long id = retweet.getId();
+                holder.mImagesContainer.setTag(id);
+                holder.mQuotedImagesContainer.setTag(id);
                 renderStatus(holder, row, retweet, status, null);
             }
         }

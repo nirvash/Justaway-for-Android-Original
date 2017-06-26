@@ -151,6 +151,7 @@ public class FaceCrop {
             for (Rect rect : rects) {
                 canvas.drawRect(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, paint);
             }
+            image.recycle();
             return result;
         } catch (Exception e) {
             e.printStackTrace();
