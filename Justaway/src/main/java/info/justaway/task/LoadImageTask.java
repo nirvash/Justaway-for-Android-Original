@@ -184,12 +184,12 @@ public class LoadImageTask implements Runnable {
     }
 
     protected void onPostExecute() {
-        // 同じ項目の View が再利用されるケースはほとんどない様子だが
-        String tag = (String) mViewGroup.getTag();
-        String oldTag = new Long(mStatus.getId()).toString();
-        if (!TextUtils.isEmpty(tag) && !tag.equals(oldTag)) {
+        // 元の ListItem が別の項目の表示に使われていないかのチェック
+        Long id  = (Long) mViewGroup.getTag();
+        Long oldId = mStatus.getId();
+        if (id == null || !id.equals(oldId)) {
             // 既に List が他のアイテム用に再利用されている
-            Log.w(TAG, String.format("onPostExecute: tag is not match: %s, %s", tag, oldTag));
+            Log.w(TAG, String.format("onPostExecute: tag is not match: %d, %d", id, oldId));
             return;
         }
 
