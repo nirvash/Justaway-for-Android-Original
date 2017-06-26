@@ -267,11 +267,13 @@ public class LoadImageTask implements Runnable {
 
             float viewHeight = mHeight;
             float viewWidth = viewSize.x * 0.8f / mUrls.size();
+            int nImages = mUrls.size();
+
 
             if (image.getScaleType() == ImageView.ScaleType.CENTER_CROP) {
-                ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
+                ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
             } else {
-                ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth);
+                ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth, nImages);
             }
 
             setClickListener(index, image);
@@ -360,8 +362,9 @@ public class LoadImageTask implements Runnable {
             }
 
             float viewWidth = viewSize.x * 0.8f * 0.33f;
+            int nImages = mUrls.size();
 
-            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth);
+            ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
 
             setClickListener(index, image);
             index++;
@@ -454,9 +457,8 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(view);
             }
 
-            float viewWidth = viewSize.x * 0.8f * 0.5f;
-            int nImages = mUrls.size();
             float viewWidth = viewSize.x * 0.8f * columnWeight;
+            int nImages = mUrls.size();
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
 
