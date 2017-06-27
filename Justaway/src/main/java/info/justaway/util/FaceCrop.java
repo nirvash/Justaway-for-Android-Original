@@ -354,6 +354,10 @@ public class FaceCrop {
 
     // 重なっている領域を合成する
     private Rect[] mergeFaceRects(Rect[] facesArray) {
+        return mergeFaceRects(facesArray, 2.0f);
+    }
+        // 左右マージン付きで領域合成
+    private Rect[] mergeFaceRects(Rect[] facesArray, float marginRate) {
         ArrayList<Rect> result = new ArrayList<>();
         LinkedList<Rect> work = new LinkedList<>();
         work.addAll(Arrays.asList(facesArray));
@@ -364,15 +368,17 @@ public class FaceCrop {
                 continue;
             }
             android.graphics.Rect gr1 = new android.graphics.Rect((int)r1.tl().x, (int)r1.tl().y, (int)r1.br().x, (int)r1.br().y);
-            work.set(i, null);
             boolean isModified = false;
-            for (int j=i+1; j<facesArray.length; j++) {
+            for (int j=0; j<facesArray.length; j++) {
+                if (i == j) {
+                    continue;
+                }
                 Rect r2 = work.get(j);
                 if (r2 == null) {
                     continue;
                 }
                 android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
-                if (android.graphics.Rect.intersects(gr1, gr2)) {
+                if (intersects(gr1, gr2, marginRate)) {
                     gr1.union(gr2);
                     work.set(j, null);
                     isModified = true;
@@ -384,13 +390,23 @@ public class FaceCrop {
                 tmp.y = gr1.top;
                 tmp.width = gr1.width();
                 tmp.height = gr1.height();
-                result.add(tmp);
-            } else {
-                result.add(r1);
+                work.set(i, tmp);
+            }
+        }
+
+        for (Rect r : work) {
+            if (r != null) {
+                result.add(r);
             }
         }
 
         return result.toArray(new Rect[0]);
+    }
+
+    private boolean intersects(android.graphics.Rect a, android.graphics.Rect b, float marginRate) {
+        float ma = a.width() * marginRate / 2;
+        float mb = b.width() * marginRate / 2;
+        return a.left - ma < b.right + mb && b.left - mb< a.right + ma && a.top  < b.bottom && b.top < a.bottom;
     }
 
     // 顔領域として不適切な位置にある領域をフィルタする
