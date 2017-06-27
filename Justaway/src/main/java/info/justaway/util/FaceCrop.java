@@ -39,13 +39,11 @@ public class FaceCrop {
 
     private boolean mIsFirst = true;
     private boolean mIsSuccess;
-    private int mMaxHeight;
     private float mWidth;
     private float mHeight;
     private Rect mRect;
     private List<Rect> mRects = new ArrayList<>();
     private int mColor = Color.MAGENTA;
-    private boolean mIsFace = false;
 
     private static CascadeClassifier sFaceDetectorAnimeFace = null;
     private static CascadeClassifier sFaceDetectorFace = null;
@@ -87,7 +85,7 @@ public class FaceCrop {
                 is = context.getResources().openRawResource(xml);
                 os = new FileOutputStream(cascadeFile);
                 byte[] buffer = new byte[4096];
-                int readLen = 0;
+                int readLen;
                 while ((readLen = is.read(buffer)) != -1) {
                     os.write(buffer, 0, readLen);
                 }
@@ -127,14 +125,13 @@ public class FaceCrop {
         return detector;
     }
 
-    public FaceCrop(int maxHeight, float w, float h) {
-        this.mMaxHeight = maxHeight;
+    private FaceCrop(float w, float h) {
         this.mWidth = w;
         this.mHeight = h;
     }
 
     private static BitmapWrapper drawFaceRegion(Rect rect, BitmapWrapper image, int color) {
-        List<Rect> list = new ArrayList<Rect>();
+        List<Rect> list = new ArrayList<>();
         list.add(rect);
         return drawFaceRegions(list, image, color);
     }
@@ -159,6 +156,7 @@ public class FaceCrop {
         }
     }
 
+    @SuppressWarnings("unused")
     private static Bitmap drawFaceRegions(List<Rect> rects, Bitmap image, int color) {
         try {
             Bitmap result = image.copy(Bitmap.Config.ARGB_8888, true);
@@ -178,6 +176,7 @@ public class FaceCrop {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     public BitmapWrapper drawRegion(BitmapWrapper bitmap) {
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
@@ -189,7 +188,7 @@ public class FaceCrop {
     }
 
     private class DetectorConf {
-        public DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color, boolean flip, String tag) {
+        DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color, boolean flip, String tag) {
             this.detector = detector;
             this.angle = angle;
             this.scale = scale;
@@ -199,16 +198,17 @@ public class FaceCrop {
             this.flip = flip;
             this.tag = tag;
         }
-        public CascadeClassifier detector;
-        public double angle;
-        public double scale;
-        public int neighbor;
+        CascadeClassifier detector;
+        double angle;
+        double scale;
+        int neighbor;
         public Size size;
         public int color;
-        public boolean flip;
-        public String tag;
+        boolean flip;
+        String tag;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public Rect getFaceRect() {
         return new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
     }
@@ -272,7 +272,7 @@ public class FaceCrop {
         return null;
     }
 
-    public Rect getFaceRectImpl(Mat imageMat, DetectorConf conf, double scale) {
+    private Rect getFaceRectImpl(Mat imageMat, DetectorConf conf, double scale) {
         if (conf.detector == null) {
             return null;
         }
@@ -324,13 +324,14 @@ public class FaceCrop {
                 }
             }
 
+            facesArray = filterFacerects(facesArray, mWidth, mHeight);
+
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
                 Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
                 mRect = r;
                 mRects.clear();
                 Collections.addAll(mRects, facesArray);
-                mIsFace = true;
                 mIsSuccess = true;
                 if (conf.angle != 0) {
                     mColor = Color.rgb(255, 153, 0);
@@ -342,6 +343,20 @@ public class FaceCrop {
         return getFaceRect();
     }
 
+    // 顔領域として不適切な位置にある領域をフィルタする
+    private Rect[] filterFacerects(Rect[] facesArray, float width, float height) {
+        ArrayList<Rect> result = new ArrayList<>();
+        int bottomArea = (int)(height * 0.6f);
+        for (Rect r : facesArray) {
+            // 画面の下部にある領域は無視
+            if (r.y > bottomArea) {
+                continue;
+            }
+            result.add(r);
+        }
+        return (Rect[])result.toArray(new Rect[0]);
+    }
+
     private Point rotatePoint(Point point, Point center, double angle) {
         double rad = angle * Math.PI / 180.0;
         Point inPoint = new Point(point.x - center.x, point.y - center.y);
@@ -351,205 +366,8 @@ public class FaceCrop {
         return outPoint;
     }
 
-    private Rect getGravityCenter(Bitmap bitmap) {
-        MatOfRect faces = new MatOfRect();
-        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Mat mask = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Mat hadairo = Mat.zeros((int) mHeight, (int) mWidth, CvType.CV_8U);
-
-        Utils.bitmapToMat(bitmap, imageMat);
-
-        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
-        Imgproc.medianBlur(imageMat, imageMat, 3);
-
-        Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
-
-        // 肌色抽出
-        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), mask);
-
-        // 重心取得
-        // Utils.matToBitmap(mask, dst);
-        Utils.bitmapToMat(bitmap, imageMat);
-        Imgproc.cvtColor(hadairo, hadairo, Imgproc.COLOR_RGB2GRAY);
-        // Utils.matToBitmap(hadairo, dst);
-
-        Moments mu = Imgproc.moments(hadairo, false);
-
-        Rect r = new Rect();
-        r.x = (int) (mu.m10 / mu.m00);
-        r.y = (int) (mu.m01 / mu.m00);
-
-        r.x -= 50;
-        r.width = 100;
-        r.y -= 50;
-        r.height = 100;
-
-        mRect = r;
-        mRects.clear();
-        mRects.add(r);
-        mIsSuccess = true;
-        mColor = Color.BLUE;
-        return mRect;
-    }
-
-    // 領域分割
-    private Rect getFeatureArea(Bitmap bitmap) {
-        MatOfRect faces = new MatOfRect();
-        Mat srcMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-
-        Utils.bitmapToMat(bitmap, srcMat);
-
-        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Imgproc.cvtColor(srcMat, imageMat, Imgproc.COLOR_RGB2HSV);
-        Imgproc.medianBlur(imageMat, imageMat, 3);
-
-        Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
-        Mat tmp =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-
-        // 肌色抽出
-        Mat bw =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-
-        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), bw);
-        Utils.matToBitmap(bw, dst);
-
-        Imgproc.threshold(bw, bw, 0, 255, Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
-        Utils.matToBitmap(bw, dst);
-
-        // ノイズ除去 (膨張 and 収縮)
-        Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
-        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_OPEN, kernel, new Point(-1, -1), 2);
-//        bw.convertTo(tmp, CvType.CV_8U);
-        Imgproc.cvtColor(bw, tmp, Imgproc.COLOR_GRAY2RGB, 4);
-        Utils.matToBitmap(tmp, dst);
-
-        // 背景領域
-        Mat sureBg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Imgproc.dilate(bw, sureBg, kernel, new Point(-1, -1),  3);
-//        sureBg.convertTo(tmp, CvType.CV_8U);
-        Imgproc.cvtColor(sureBg, tmp, Imgproc.COLOR_GRAY2RGB, 4);
-        Utils.matToBitmap(tmp, dst);
-
-        // 輪郭の内側に行くほど白が残るマスク
-        Mat sureFg = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Imgproc.distanceTransform(bw, sureFg, Imgproc.DIST_L2, 3); // 3.5 or 0 CV_8C1 -> CV_32FC1
-
-        sureFg.convertTo(tmp, CvType.CV_8U);
-        Imgproc.equalizeHist(tmp, tmp);
-        Utils.matToBitmap(tmp, dst);
-
-        Core.normalize(sureFg, sureFg, 0.0f, 255.0f, Core.NORM_MINMAX);
-
-        sureFg.convertTo(tmp, CvType.CV_8U);
-        Imgproc.equalizeHist(tmp, tmp);
-        Utils.matToBitmap(tmp, dst);
-
-        // 中心部分だけ抽出
-        Imgproc.threshold(sureFg, sureFg, 40, 255, Imgproc.THRESH_BINARY);
-        Imgproc.dilate(sureFg, sureFg, kernel,  new Point(-1, -1), 3); // CV_32FC1 -> CV_32FC1
-
-        sureFg.convertTo(tmp, CvType.CV_8U);
-        Imgproc.equalizeHist(tmp, tmp);
-        Utils.matToBitmap(tmp, dst);
-
-        // 不明領域
-        Mat sureFgUC1 = sureFg.clone();
-        sureFg.convertTo(sureFgUC1, CvType.CV_8UC1);
-        Mat unknown = sureFg.clone();
-        Core.subtract(sureBg, sureFgUC1, unknown);
-
-        unknown.convertTo(tmp, CvType.CV_8U);
-        Imgproc.equalizeHist(tmp, tmp);
-        Utils.matToBitmap(tmp, dst);
-
-        Mat markers = Mat.zeros(sureFg.size(), CvType.CV_32SC1);
-
-        sureFg.convertTo(sureFg, CvType.CV_8U);
-        int nLabels = Imgproc.connectedComponents(sureFg, markers, 8, CvType.CV_32SC1);
-        if (nLabels < 2) {
-            return mRect;
-        }
-
-        Core.add(markers, new Scalar(1), markers);
-        for (int i=0; i<markers.rows(); i++) {
-            for (int j=0; j<markers.cols(); j++) {
-                double[] data = unknown.get(i, j);
-                if (data[0] == 255) {
-                    int[] val = new int[] { 255 };
-                    markers.put(i, j, val);
-                }
-            }
-        }
-
-        Imgproc.cvtColor(srcMat, srcMat, Imgproc.COLOR_RGBA2RGB);
-        Imgproc.watershed(srcMat, markers);
-
-        markers.convertTo(tmp, CvType.CV_8U);
-        Imgproc.equalizeHist(tmp, tmp);
-        Utils.matToBitmap(tmp, dst);
-
-        mRect = null;
-        mRects.clear();
-        return mRect;
-    }
-
-    private Rect getContourRect(Bitmap bitmap) {
-        if (bitmap == null) {
-            return mRect;
-        }
-
-        MatOfRect faces = new MatOfRect();
-        Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-
-        Utils.bitmapToMat(bitmap, imageMat);
-
-        Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2HSV);
-        Imgproc.medianBlur(imageMat, imageMat, 5);
-
-       // Bitmap dst = Bitmap.createBitmap(imageMat.width(), imageMat.height(), Bitmap.Config.ARGB_8888);
-
-        // 肌色抽出
-        Mat bw =  new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
-        Core.inRange(imageMat, new Scalar(0, 20, 88), new Scalar(25, 80, 255), bw);
-
-       // Imgproc.threshold(bw, bw, 0, 255, Imgproc.THRESH_BINARY | Imgproc.THRESH_OTSU);
-
-        // ノイズ除去 (膨張 and 収縮)
-        Mat kernel = Mat.ones(3, 3, CvType.CV_8U);
-        Imgproc.morphologyEx(bw, bw, Imgproc.MORPH_CLOSE, kernel, new Point(-1, -1), 2);
-
-        // 輪郭の内側のみ抽出
-        Imgproc.distanceTransform(bw, bw, Imgproc.DIST_L2, 3); // 3.5 or 0 CV_8C1 -> CV_32FC1
-        Core.normalize(bw, bw, 0.0f, 255.0f, Core.NORM_MINMAX);
-        Imgproc.threshold(bw, bw, 30, 255, Imgproc.THRESH_BINARY);
-        Imgproc.dilate(bw, bw, kernel,  new Point(-1, -1), 3); // CV_32FC1 -> CV_32FC1
-        bw.convertTo(bw, CvType.CV_8U); // CV_32FC1 -> CV_8UC1
-
-        List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-        Mat hierarchy = Mat.zeros(new Size(5,5), CvType.CV_8UC1);
-        Imgproc.findContours(bw, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_TC89_L1);
-
-        mRect = null;
-        mRects.clear();
-        double maxArea = 0;
-        for (MatOfPoint contour : contours) {
-            Rect r = Imgproc.boundingRect(contour);
-            mRects.add(r);
-
-            double area = Imgproc.contourArea(contour);
-            if (maxArea < area) {
-                maxArea = area;
-                mRect = r;
-            }
-        }
-
-        if (contours.size() > 0) {
-            mColor = Color.BLUE;
-            mIsSuccess = true;
-        }
-
-        return mRect;
-    }
-
+    // 指定したサイズで顔領域をクロップした画像を返す
+    @SuppressWarnings("WeakerAccess")
     public BitmapWrapper cropFace2(BitmapWrapper image, int width, int height) {
         Rect r = getFaceRect();
         enlargeRect(r, (int)image.getWidth(), (int)image.getHeight());
@@ -597,6 +415,8 @@ public class FaceCrop {
         }
     }
 
+    // 顔領域をクロップした画像を返す
+    @SuppressWarnings("WeakerAccess")
     public BitmapWrapper cropFace(BitmapWrapper bitmap, float aspect) {
         if (!mIsSuccess) {
             return bitmap;
@@ -722,10 +542,10 @@ public class FaceCrop {
         return ret;
     }
 
-    public static FaceCrop get(String imageUri, int maxHeight, float w, float h) {
+    public static FaceCrop get(String imageUri, float w, float h) {
         FaceCrop faceCrop = sFaceInfoMap.get(imageUri);
         if (faceCrop == null) {
-            faceCrop = new FaceCrop(maxHeight, w, h);
+            faceCrop = new FaceCrop(w, h);
             sFaceInfoMap.put(imageUri, faceCrop);
         }
         return faceCrop;

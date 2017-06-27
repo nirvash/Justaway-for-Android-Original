@@ -103,7 +103,7 @@ public class ImageUtil {
                 if (imageView != null) {
                     float w = wrapper.getWidth();
                     float h = wrapper.getHeight();
-                    FaceCrop faceCrop = FaceCrop.get(imageUri, maxHeight, w, h);
+                    FaceCrop faceCrop = FaceCrop.get(imageUri, w, h);
                     if (faceCrop != null && faceCrop.isSuccess()) {
                         BitmapWrapper cropImage = faceCrop != null ? faceCrop.drawRegion(wrapper) : null;
                         if (cropImage != null) {

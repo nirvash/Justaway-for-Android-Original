@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -168,7 +167,7 @@ public class LoadImageTask implements Runnable {
                     }
 
                     if (BasicSettings.enableFaceDetection()) {
-                        faceCrop = FaceCrop.get(url, mHeight, w, h);
+                        faceCrop = FaceCrop.get(url, w, h);
                         if (faceCrop != null) {
                             faceCrop.getFaceRect(bitmap);
                         };
