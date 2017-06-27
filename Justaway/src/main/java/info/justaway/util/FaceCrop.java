@@ -368,7 +368,7 @@ public class FaceCrop {
                     continue;
                 }
                 android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
-                if (gr1.intersect(gr2)) {
+                if (android.graphics.Rect.intersects(gr1, gr2)) {
                     gr1.union(gr2);
                     work.set(j, null);
                     isModified = true;
