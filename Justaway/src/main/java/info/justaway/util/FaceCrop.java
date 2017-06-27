@@ -212,7 +212,11 @@ public class FaceCrop {
 
     @SuppressWarnings("WeakerAccess")
     public Rect getFaceRect() {
-        return new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+        if (mRect == null) {
+            return new Rect();
+        } else {
+            return new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+        }
     }
 
     public Rect getFaceRect(Bitmap bitmap) {

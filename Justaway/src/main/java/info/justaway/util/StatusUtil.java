@@ -12,6 +12,8 @@ import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
 import android.view.View;
 
+import com.deploygate.sdk.DeployGate;
+
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -215,48 +217,58 @@ public class StatusUtil {
         sb.append(str);
         UnderlineSpan us;
 
-        Matcher urlMatcher = URL_PATTERN.matcher(str);
-        while (urlMatcher.find()) {
-/*            us = new UnderlineSpan();
-            sb.setSpan(us, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-*/
-            final Uri uri = Uri.parse(urlMatcher.group());
-            ClickableSpan cs = new ClickableSpan() {
-                @Override
-                public void onClick(View widget) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        context.startActivity(intent);
-                    } catch (Exception e) {
+        try {
+            Matcher urlMatcher = URL_PATTERN.matcher(str);
+            while (urlMatcher.find()) {
+    /*            us = new UnderlineSpan();
+                sb.setSpan(us, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    */
+                final Uri uri = Uri.parse(urlMatcher.group());
+                ClickableSpan cs = new ClickableSpan() {
+                    @Override
+                    public void onClick(View widget) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            context.startActivity(intent);
+                        } catch (Exception e) {
+                        }
                     }
-                }
-            };
+                };
 
-            sb.setSpan(cs, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(cs, urlMatcher.start(), urlMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } catch (Exception e) {
+            DeployGate.logError("generateUnderline: " + e.getMessage());
+            DeployGate.logError("generateUnderline: " + str);
         }
 
-        String tmpStr = Normalizer.normalize(str, Normalizer.Form.NFKC).toUpperCase();
-        final Matcher idMatcher = GRANBLUE_FANTASY_ID_PATTERN.matcher(tmpStr);
-        while (idMatcher.find()) {
-            final String id = idMatcher.group();
-            ClickableSpan cs = new ClickableSpan() {
-                @Override
-                public void onClick(View widget) {
-                    ClipboardManager cm = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
-                    cm.setPrimaryClip(ClipData.newPlainText("label", id));
-                    String message = String.format(context.getString(R.string.copy_id_success), id);
-                    MessageUtil.showToast(message);
+        try {
+            String tmpStr = Normalizer.normalize(str, Normalizer.Form.NFKC).toUpperCase();
+            final Matcher idMatcher = GRANBLUE_FANTASY_ID_PATTERN.matcher(tmpStr);
+            while (idMatcher.find()) {
+                final String id = idMatcher.group();
+                ClickableSpan cs = new ClickableSpan() {
+                    @Override
+                    public void onClick(View widget) {
+                        ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                        cm.setPrimaryClip(ClipData.newPlainText("label", id));
+                        String message = String.format(context.getString(R.string.copy_id_success), id);
+                        MessageUtil.showToast(message);
 
-                    PackageManager pm = context.getPackageManager();
-                    Intent intent = pm.getLaunchIntentForPackage("jp.mbga.a12016007.lite");
-                    try {
-                        context.startActivity(intent);
-                    } catch (Exception e) {
+                        PackageManager pm = context.getPackageManager();
+                        Intent intent = pm.getLaunchIntentForPackage("jp.mbga.a12016007.lite");
+                        try {
+                            context.startActivity(intent);
+                        } catch (Exception e) {
+                        }
                     }
-                }
-            };
+                };
 
-            sb.setSpan(cs, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(cs, idMatcher.start(), idMatcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } catch (Exception e) {
+            DeployGate.logError("generateUnderline2: " + e.getMessage());
+            DeployGate.logError("generateUnderline2: " + str);
         }
 
 /*
