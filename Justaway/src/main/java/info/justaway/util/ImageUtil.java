@@ -83,6 +83,7 @@ public class ImageUtil {
         }
     }
 
+    // ScaleImageView で使っている
     public static void displayImageFaceDetect(String url, ImageView view) {
         String tag = (String) view.getTag();
         if (tag != null && tag.equals(url)) {

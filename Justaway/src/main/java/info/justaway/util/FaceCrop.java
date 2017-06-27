@@ -24,8 +24,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +42,7 @@ public class FaceCrop {
     private float mWidth;
     private float mHeight;
     private Rect mRect;
+    private List<Rect> mRectsOrig = new ArrayList<>();
     private List<Rect> mRects = new ArrayList<>();
     private int mColor = Color.MAGENTA;
 
@@ -178,6 +181,7 @@ public class FaceCrop {
     public BitmapWrapper drawRegion(BitmapWrapper bitmap) {
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
+                bitmap = drawFaceRegions(mRectsOrig, bitmap, Color.YELLOW);
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
                 return bitmap;
             }
@@ -322,7 +326,10 @@ public class FaceCrop {
                 }
             }
 
+            mRectsOrig.clear();
+            Collections.addAll(mRectsOrig, facesArray);
             facesArray = filterFaceRects(facesArray, mWidth, mHeight);
+            facesArray = mergeFaceRects(facesArray);
 
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
@@ -339,6 +346,47 @@ public class FaceCrop {
             e.printStackTrace();
         }
         return getFaceRect();
+    }
+
+    // 重なっている領域を合成する
+    private Rect[] mergeFaceRects(Rect[] facesArray) {
+        ArrayList<Rect> result = new ArrayList<>();
+        LinkedList<Rect> work = new LinkedList<>();
+        work.addAll(Arrays.asList(facesArray));
+
+        for (int i=0; i<facesArray.length; i++) {
+            Rect r1 = work.get(i);
+            if (r1 == null) {
+                continue;
+            }
+            android.graphics.Rect gr1 = new android.graphics.Rect((int)r1.tl().x, (int)r1.tl().y, (int)r1.br().x, (int)r1.br().y);
+            work.set(i, null);
+            boolean isModified = false;
+            for (int j=i+1; j<facesArray.length; j++) {
+                Rect r2 = work.get(j);
+                if (r2 == null) {
+                    continue;
+                }
+                android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
+                if (gr1.intersect(gr2)) {
+                    gr1.union(gr2);
+                    work.set(j, null);
+                    isModified = true;
+                }
+            }
+            if (isModified) {
+                Rect tmp = new Rect();
+                tmp.x = gr1.left;
+                tmp.y = gr1.top;
+                tmp.width = gr1.width();
+                tmp.height = gr1.height();
+                result.add(tmp);
+            } else {
+                result.add(r1);
+            }
+        }
+
+        return result.toArray(new Rect[0]);
     }
 
     // 顔領域として不適切な位置にある領域をフィルタする
@@ -429,7 +477,7 @@ public class FaceCrop {
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
             }
 
-            Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+            Rect r = getFaceRect();
             if (bitmapAspect > aspect) {
                 //r = addVPadding(r, bitmap.getBitmap(), (int) (w * aspect));
                 enlargeRect(r, bitmapWidth, bitmapHeight);
