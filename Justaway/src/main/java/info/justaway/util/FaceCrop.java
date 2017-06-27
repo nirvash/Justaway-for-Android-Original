@@ -11,14 +11,12 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
@@ -324,7 +322,7 @@ public class FaceCrop {
                 }
             }
 
-            facesArray = filterFacerects(facesArray, mWidth, mHeight);
+            facesArray = filterFaceRects(facesArray, mWidth, mHeight);
 
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
@@ -344,7 +342,8 @@ public class FaceCrop {
     }
 
     // 顔領域として不適切な位置にある領域をフィルタする
-    private Rect[] filterFacerects(Rect[] facesArray, float width, float height) {
+    @SuppressWarnings("UnusedParameters")
+    private Rect[] filterFaceRects(Rect[] facesArray, float width, float height) {
         ArrayList<Rect> result = new ArrayList<>();
         int bottomArea = (int)(height * 0.6f);
         for (Rect r : facesArray) {
@@ -354,7 +353,7 @@ public class FaceCrop {
             }
             result.add(r);
         }
-        return (Rect[])result.toArray(new Rect[0]);
+        return result.toArray(new Rect[0]);
     }
 
     private Point rotatePoint(Point point, Point center, double angle) {
@@ -368,13 +367,13 @@ public class FaceCrop {
 
     // 指定したサイズで顔領域をクロップした画像を返す
     @SuppressWarnings("WeakerAccess")
-    public BitmapWrapper cropFace2(BitmapWrapper image, int width, int height) {
+    public BitmapWrapper cropFace2(BitmapWrapper image, int viewWidth, int viewHeight) {
         Rect r = getFaceRect();
         enlargeRect(r, (int)image.getWidth(), (int)image.getHeight());
         if (BasicSettings.isDebug()) {
             image = drawFaceRegion(r, image, mColor);
         }
-        adjustRect(r, width, height, (int)image.getWidth(), (int)image.getHeight());
+        adjustRect(r, viewWidth, viewHeight, (int)image.getWidth(), (int)image.getHeight());
         Bitmap cropped = Bitmap.createBitmap(image.getBitmap(), r.x, r.y, r.width, r.height);
         image.setBitmap(cropped, true);
         return image;
@@ -383,8 +382,8 @@ public class FaceCrop {
 
 
     // 描画領域のアスペクト比に合わせてクロップ領域を調整
-    private static void adjustRect(Rect rect, int width, int height, int bitmapWidth, int bitmapHeight) {
-        float widgetAspect = (float)width / (float) height;
+    private static void adjustRect(Rect rect, int viewWidth, int viewHeight, int bitmapWidth, int bitmapHeight) {
+        float widgetAspect = (float)viewWidth / (float) viewHeight;
         float rectAspect = (float)rect.width / (float)rect.height;
         if (widgetAspect > rectAspect) {
             int w = (int)(rect.height * widgetAspect);
@@ -417,15 +416,14 @@ public class FaceCrop {
 
     // 顔領域をクロップした画像を返す
     @SuppressWarnings("WeakerAccess")
-    public BitmapWrapper cropFace(BitmapWrapper bitmap, float aspect) {
+    public BitmapWrapper cropFace(BitmapWrapper bitmap, float aspect, int viewWidth, int viewHeight) {
         if (!mIsSuccess) {
             return bitmap;
         }
         try {
-
-            float w = bitmap.getWidth();
-            float h = bitmap.getHeight();
-            float bitmapAspect = h / w;
+            int bitmapWidth = (int)bitmap.getWidth();
+            int bitmapHeight = (int)bitmap.getHeight();
+            float bitmapAspect = bitmapHeight / (float)bitmapWidth;
 
             if (BasicSettings.isDebug()) {
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
@@ -433,14 +431,20 @@ public class FaceCrop {
 
             Rect r = new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
             if (bitmapAspect > aspect) {
-                r = addVPadding(r, bitmap.getBitmap(), (int) (w * aspect));
-                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), 0, r.y, (int) w, r.height);
-                bitmap.setBitmap(resized, true);
+                //r = addVPadding(r, bitmap.getBitmap(), (int) (w * aspect));
+                enlargeRect(r, bitmapWidth, bitmapHeight);
+                adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
+//                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), 0, r.y, (int) w, r.height);
+                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x, r.y, r.width, r.height);
+                bitmap.setBitmap(cropped, true);
                 return bitmap;
             } else {
-                r = addHPadding(r, bitmap.getBitmap(), (int) (h / aspect));
-                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), r.x, 0, r.width, (int) h);
-                bitmap.setBitmap(resized, true);
+//                r = addHPadding(r, bitmap.getBitmap(), (int) (bitmapHeight / aspect));
+                adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
+                adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
+//                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), r.x, 0, r.width, (int) h);
+                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x, r.y, r.width, r.height);
+                bitmap.setBitmap(cropped, true);
                 return bitmap;
             }
         } catch (Exception e) {
@@ -449,43 +453,46 @@ public class FaceCrop {
         }
     }
 
-    private void enlargeRect(Rect r, int width, int height) {
-        float xrate = r.width / (float)width;
-        float yrate = r.height / (float)height;
+    private void enlargeRect(Rect r, int bitmapWidth, int bitmapHeight) {
+        float xRate = r.width / (float)bitmapWidth;
+        float yRate = r.height / (float)bitmapHeight;
         float SCALE1 = 0.3f;
-        float SCALE2 = 0.1f;
-        float xpadding = xrate < 0.2 ? width * SCALE1 : width * SCALE2;
-        float ypadding = yrate < 0.2 ? height * SCALE1 : height * SCALE2;
-        r.y -= ypadding / 2;
-        r.height += ypadding;
+        float SCALE2 = 0.2f;
+        float SCALE3 = 0.1f;
+        float xScale = xRate < 0.2 ? SCALE1 : (xRate  < 0.4 ? SCALE2 : SCALE3);
+        float xPadding = bitmapWidth * xScale;
+        float yScale = yRate < 0.2 ? SCALE1 : (yRate  < 0.4 ? SCALE2 : SCALE3);
+        float yPadding = bitmapHeight * yScale;
+        r.y -= yPadding / 2;
+        r.height += yPadding;
         if (r.y < 0) {
             r.height += r.y;
             r.y = 0;
         }
-        int bottomExcess =r.y + r.height - height;
+        int bottomExcess =r.y + r.height - bitmapHeight;
 
         if (bottomExcess > 0) {
             r.y -= bottomExcess;
             if (r.y < 0) {
                 r.y = 0;
             }
-            r.height = height - r.y;
+            r.height = bitmapHeight - r.y;
         }
 
-        r.x -= xpadding / 2;
-        r.width += xpadding;
+        r.x -= xPadding / 2;
+        r.width += xPadding;
         if (r.x < 0) {
             r.width += r.x;
             r.x = 0;
         }
-        int rightExcess =r.x + r.width - width;
+        int rightExcess =r.x + r.width - bitmapWidth;
 
         if (rightExcess > 0) {
             r.x -= rightExcess;
             if (r.x < 0) {
                 r.x = 0;
             }
-            r.width = width - r.x;
+            r.width = bitmapWidth - r.x;
         }
     }
 

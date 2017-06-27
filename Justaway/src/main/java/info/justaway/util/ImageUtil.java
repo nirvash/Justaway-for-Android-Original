@@ -162,6 +162,7 @@ public class ImageUtil {
     }
 
     // レイアウトが後用
+    // 画像をクロップして ImageView に設定する
     public static void setImageWithCrop(LoadImageTask.Result entry, ImageView imageView, boolean cropByAspect, float viewHeight, float viewWidth, int nImages) {
         BitmapWrapper image = new BitmapWrapper(entry.bitmap, false);
         float viewAspect = viewHeight / viewWidth;
@@ -171,7 +172,7 @@ public class ImageUtil {
                 if (nImages > 1) {
                     image = entry.faceCrop.cropFace2(image, (int) viewWidth, (int) viewHeight);
                 } else {
-                    image = entry.faceCrop.cropFace(image, viewAspect);
+                    image = entry.faceCrop.cropFace(image, viewAspect,  (int) viewWidth, (int) viewHeight);
                 };
             }
             float w = image.getWidth();
@@ -227,7 +228,7 @@ public class ImageUtil {
             if (nImages > 1) {
                 image = entry.faceCrop.cropFace2(image, (int) viewWidth, (int) viewHeight);
             } else {
-                image = entry.faceCrop.cropFace(image, viewAspect);
+                image = entry.faceCrop.cropFace(image, viewAspect,  (int) viewWidth, (int) viewHeight);
             }
             imageView.setImageBitmap(image.getBitmap());
         } else {

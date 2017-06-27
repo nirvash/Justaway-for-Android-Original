@@ -129,10 +129,7 @@ public class LoadImageTask implements Runnable {
         }
 
         public boolean isLandscape() {
-            if (bitmap.getWidth() > bitmap.getHeight() * 1.1f) {
-                return true;
-            }
-            return false;
+            return bitmap.getWidth() > bitmap.getHeight() * 1.1f;
         }
 
         // おおよそ正方形かどうか
@@ -142,11 +139,7 @@ public class LoadImageTask implements Runnable {
         }
 
         public boolean isFaceDetected() {
-            if (faceCrop == null) {
-                return false;
-            }
-
-            return faceCrop.isSuccess();
+            return faceCrop != null && faceCrop.isSuccess();
         }
 
 
@@ -265,7 +258,8 @@ public class LoadImageTask implements Runnable {
             }
 
             float viewHeight = mHeight;
-            float viewWidth = viewSize.x * 0.8f / mUrls.size();
+            float viewWidth = mViewGroup.getWidth() / (float)mUrls.size();
+            //float viewWidth = viewSize.x * 0.8f / mUrls.size();
             int nImages = mUrls.size();
 
 
@@ -360,7 +354,8 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(view);
             }
 
-            float viewWidth = viewSize.x * 0.8f * 0.33f;
+//            float viewWidth = viewSize.x * 0.8f * 0.33f;
+            float viewWidth = mViewGroup.getWidth() * 0.33f;
             int nImages = mUrls.size();
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
@@ -456,7 +451,8 @@ public class LoadImageTask implements Runnable {
                 mViewGroup.addView(view);
             }
 
-            float viewWidth = viewSize.x * 0.8f * columnWeight;
+//            float viewWidth = viewSize.x * 0.8f * columnWeight;
+            float viewWidth = mViewGroup.getWidth() * columnWeight;
             int nImages = mUrls.size();
 
             ImageUtil.setImageWithCrop(entry, image, false, viewHeight, viewWidth, nImages);
@@ -521,7 +517,8 @@ public class LoadImageTask implements Runnable {
             views[viewIndex].addView(image, layoutParams);
 
             float viewHeight = height;
-            float viewWidth = viewSize.x * 0.8f * 0.5f;
+            float viewWidth = mViewGroup.getWidth() * 0.5f;
+ //           float viewWidth = viewSize.x * 0.8f * 0.5f;
             int nImages = mUrls.size();
 
             ImageUtil.setImageWithCrop(entry, image, cropByAspect, viewHeight, viewWidth, nImages);
