@@ -643,6 +643,10 @@ public class MainActivity extends FragmentActivity {
                 mViewPager.setCurrentItem(position); // 自動スワイプ
                 if (f.isTop()) {
                     showTopView(); // 移動先のページが先頭のツイートを表示していたらボタン色を白に
+                } else {
+                    if (f.goToTop()) {
+                        showTopView();
+                    }
                 }
             } else {
                 if (f.goToTop()) {
