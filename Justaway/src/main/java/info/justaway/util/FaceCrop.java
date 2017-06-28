@@ -508,7 +508,7 @@ public class FaceCrop {
                 return bitmap;
             } else {
 //                r = addHPadding(r, bitmap.getBitmap(), (int) (bitmapHeight / aspect));
-                adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
+                enlargeRect(r, bitmapWidth, bitmapHeight);
                 adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
 //                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), r.x, 0, r.width, (int) h);
                 Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x, r.y, r.width, r.height);
