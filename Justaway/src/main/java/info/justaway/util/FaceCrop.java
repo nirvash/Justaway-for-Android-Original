@@ -375,12 +375,13 @@ public class FaceCrop {
                 Rect r2 = facesArray[j];
                 android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
                 if (horizontalIntersects(gr1, gr2, marginRateX) || verticalIntersects(gr1, gr2, marginRateY)) {
-                    int label1 = map.get(i);
-                    int label2 = map.get(j);
-                    if (label1 < label2) {
-                        map.put(j, label1);
-                    } else {
-                        map.put(i, label2);
+                    int labelMin = Math.min(map.get(i), map.get(j));
+                    int labelMax = Math.max(map.get(i), map.get(j));
+                    // labelMax をすべて labelMin に書き換える
+                    for (int k=0; i<facesArray.length; i++) {
+                        if (map.get(k) == labelMax) {
+                            map.put(k, labelMin);
+                        }
                     }
                 }
             }
