@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -354,48 +356,52 @@ public class FaceCrop {
 
     // 重なっている領域を合成する
     private Rect[] mergeFaceRects(Rect[] facesArray) {
-        return mergeFaceRects(facesArray, 2.0f);
+        return mergeFaceRects(facesArray, 1.0f, 0.5f);
     }
         // 左右マージン付きで領域合成
-    private Rect[] mergeFaceRects(Rect[] facesArray, float marginRate) {
+    private Rect[] mergeFaceRects(Rect[] facesArray, float marginRateX, float marginRateY) {
         ArrayList<Rect> result = new ArrayList<>();
-        LinkedList<Rect> work = new LinkedList<>();
-        work.addAll(Arrays.asList(facesArray));
+        HashMap<Integer, Integer> map = new HashMap<>(); // 領域ごとにつけたラベル
 
         for (int i=0; i<facesArray.length; i++) {
-            Rect r1 = work.get(i);
-            if (r1 == null) {
-                continue;
-            }
+            map.put(i, i);
+        }
+
+        for (int i=0; i<facesArray.length; i++) {
+            Rect r1 = facesArray[i];
             android.graphics.Rect gr1 = new android.graphics.Rect((int)r1.tl().x, (int)r1.tl().y, (int)r1.br().x, (int)r1.br().y);
-            boolean isModified = false;
-            for (int j=0; j<facesArray.length; j++) {
-                if (i == j) {
-                    continue;
-                }
-                Rect r2 = work.get(j);
-                if (r2 == null) {
-                    continue;
-                }
+
+            for (int j=i+1; j<facesArray.length; j++) {
+                Rect r2 = facesArray[j];
                 android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
-                if (intersects(gr1, gr2, marginRate)) {
-                    gr1.union(gr2);
-                    work.set(j, null);
-                    isModified = true;
+                if (horizontalIntersects(gr1, gr2, marginRateX) || verticalIntersects(gr1, gr2, marginRateY)) {
+                    int label1 = map.get(i);
+                    int label2 = map.get(j);
+                    if (label1 < label2) {
+                        map.put(j, label1);
+                    } else {
+                        map.put(i, label2);
+                    }
                 }
-            }
-            if (isModified) {
-                Rect tmp = new Rect();
-                tmp.x = gr1.left;
-                tmp.y = gr1.top;
-                tmp.width = gr1.width();
-                tmp.height = gr1.height();
-                work.set(i, tmp);
             }
         }
 
-        for (Rect r : work) {
-            if (r != null) {
+        for (int i=0; i<facesArray.length; i++) {
+            android.graphics.Rect gr1 = null;
+            for (int j=0; j<facesArray.length; j++) {
+                int label = map.get(j);
+                if (label == i) {
+                    Rect r2 = facesArray[j];
+                    android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
+                    if (gr1 == null) {
+                        gr1 = gr2;
+                    } else {
+                        gr1.union(gr2);
+                    }
+                }
+            }
+            if (gr1 != null) {
+                Rect r = createRect(gr1);
                 result.add(r);
             }
         }
@@ -403,13 +409,29 @@ public class FaceCrop {
         return result.toArray(new Rect[0]);
     }
 
-    private boolean intersects(android.graphics.Rect a, android.graphics.Rect b, float marginRate) {
-        float ma = a.width() * marginRate / 2;
-        float mb = b.width() * marginRate / 2;
+    @NonNull
+    private Rect createRect(android.graphics.Rect rect) {
+        Rect tmp = new Rect();
+        tmp.x = rect.left;
+        tmp.y = rect.top;
+        tmp.width = rect.width();
+        tmp.height = rect.height();
+        return tmp;
+    }
+
+    private boolean horizontalIntersects(android.graphics.Rect a, android.graphics.Rect b, float marginRate) {
+        float ma = a.width() * marginRate;
+        float mb = b.width() * marginRate;
         return a.left - ma < b.right + mb && b.left - mb< a.right + ma && a.top  < b.bottom && b.top < a.bottom;
     }
 
-    // 顔領域として不適切な位置にある領域をフィルタする
+    private boolean verticalIntersects(android.graphics.Rect a, android.graphics.Rect b, float marginRate) {
+        float ma = a.height() * marginRate;
+        float mb = b.height() * marginRate;
+        return a.top - ma < b.bottom + mb && b.top - mb< a.bottom + ma && a.left  < b.right && b.left < a.right;
+    }
+
+        // 顔領域として不適切な位置にある領域をフィルタする
     @SuppressWarnings("UnusedParameters")
     private Rect[] filterFaceRects(Rect[] facesArray, float width, float height) {
         ArrayList<Rect> result = new ArrayList<>();

@@ -94,9 +94,6 @@ android {
         exclude 'META-INF/LICENSE.txt'
     }
 
-    dexOptions {
-        incremental true
-    }
     buildToolsVersion '25.0.2'
 }
 
