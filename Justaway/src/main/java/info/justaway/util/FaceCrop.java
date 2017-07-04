@@ -461,11 +461,14 @@ public class FaceCrop {
     @SuppressWarnings("WeakerAccess")
     public BitmapWrapper cropFace2(BitmapWrapper image, int viewWidth, int viewHeight) {
         Rect r = getFaceRect();
+        if (BasicSettings.isDebug()) {
+            image = drawFaceRegion(r, image, Color.YELLOW);
+        }
         enlargeRect(r, (int)image.getWidth(), (int)image.getHeight());
+        adjustRect(r, viewWidth, viewHeight, (int)image.getWidth(), (int)image.getHeight());
         if (BasicSettings.isDebug()) {
             image = drawFaceRegion(r, image, mColor);
         }
-        adjustRect(r, viewWidth, viewHeight, (int)image.getWidth(), (int)image.getHeight());
         Bitmap cropped = Bitmap.createBitmap(image.getBitmap(), r.x, r.y, r.width, r.height);
         image.setBitmap(cropped, true);
         return image;

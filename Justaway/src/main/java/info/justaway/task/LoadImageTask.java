@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -248,18 +249,22 @@ public class LoadImageTask implements Runnable {
                 }
             }
 
+            float viewHeight = mHeight;
+            float viewWidth = mViewGroup.getWidth() / (float)mUrls.size();
+            if (mViewGroup.getWidth() == 0) {
+                viewWidth = (viewSize.x - convertDp2Px(60.0f, mContext)) / (float)mUrls.size();
+            }
+
             if (mUrls.size() == 1) {
                 Space space = new Space(mContext);
-                LinearLayout.LayoutParams dummyParams = new LinearLayout.LayoutParams(20, mHeight, 0.15f);
+                LinearLayout.LayoutParams dummyParams = new LinearLayout.LayoutParams(0, mHeight, 0.15f);
                 mViewGroup.addView(image, layoutParams);
                 mViewGroup.addView(space, dummyParams);
+                viewWidth /= 1.15f;
             } else {
                 mViewGroup.addView(image, layoutParams);
             }
 
-            float viewHeight = mHeight;
-            float viewWidth = mViewGroup.getWidth() / (float)mUrls.size();
-            //float viewWidth = viewSize.x * 0.8f / mUrls.size();
             int nImages = mUrls.size();
 
 
@@ -274,6 +279,11 @@ public class LoadImageTask implements Runnable {
         }
 
         return true;
+    }
+
+    private float convertDp2Px(float dp, Context context) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        return dp * metrics.density;
     }
 
     // 縦2 を含む4枚レイアウト
@@ -484,7 +494,7 @@ public class LoadImageTask implements Runnable {
         boolean isLeft = true;
         for (LinearLayout view : views) {
             view.setOrientation(LinearLayout.VERTICAL);
-            // LinearLayout の weight は各子要素の幅の合計 - 親の幅の差分を weight で配分なので、純粋に割合で割り当てたいときはh場を 0　にしておけばよい
+            // LinearLayout の weight は各子要素の幅の合計 - 親の幅の差分を weight で配分なので、純粋に割合で割り当てたいときは幅を 0　にしておけばよい
             LinearLayout.LayoutParams layoutParams =
                     new LinearLayout.LayoutParams(0, maxHeight, 1.0f);
             if (isLeft) {
