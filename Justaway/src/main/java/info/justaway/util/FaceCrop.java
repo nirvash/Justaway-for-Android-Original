@@ -378,7 +378,7 @@ public class FaceCrop {
                     int labelMin = Math.min(map.get(i), map.get(j));
                     int labelMax = Math.max(map.get(i), map.get(j));
                     // labelMax をすべて labelMin に書き換える
-                    for (int k=0; i<facesArray.length; i++) {
+                    for (int k=0; k<facesArray.length; k++) {
                         if (map.get(k) == labelMax) {
                             map.put(k, labelMin);
                         }
@@ -387,6 +387,7 @@ public class FaceCrop {
             }
         }
 
+        // 同じラベルがついた領域をマージする
         for (int i=0; i<facesArray.length; i++) {
             android.graphics.Rect gr1 = null;
             for (int j=0; j<facesArray.length; j++) {
