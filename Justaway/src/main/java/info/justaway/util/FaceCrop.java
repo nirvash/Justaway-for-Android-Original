@@ -18,6 +18,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
@@ -254,25 +255,28 @@ public class FaceCrop {
 
         try {
             Mat imageMat = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(4));
+            Mat gray = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(1));
             Utils.bitmapToMat(bitmap, imageMat);
 
             // グレースケール化 (色情報はいらない)
-            Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_RGB2GRAY);
+            Imgproc.cvtColor(imageMat, gray, Imgproc.COLOR_RGB2GRAY);
             // ヒストグラム均一化
-            Imgproc.equalizeHist(imageMat, imageMat);
+            Imgproc.equalizeHist(gray, gray);
 
             double scale = mWidth * mHeight > 500 * 500 ? 0.5f : 1.0f;
             if (scale < 1.0f) {
-                Imgproc.resize(imageMat, imageMat, new Size(mWidth * scale, mHeight * scale));
+                Imgproc.resize(gray, gray, new Size(mWidth * scale, mHeight * scale));
             }
 
             for (DetectorConf conf : confs) {
                 mColor = conf.color;
-                Rect ret = getFaceRectImpl(imageMat, conf, scale);
-                if (ret != null) {
-                    return ret;
+                Rect ret = getFaceRectImpl(gray, conf, scale);
+                if (mIsSuccess) {
+                    return getFaceRect();
                 }
             }
+
+            return getSkinRect(imageMat);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -351,6 +355,47 @@ public class FaceCrop {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return mRect;
+    }
+
+    private Rect getSkinRect(Mat src) {
+        Mat hsv = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(3));
+        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
+        Core.inRange(hsv, new Scalar(0, 10, 60), new Scalar(40, 155, 255), hsv);
+        int area = Core.countNonZero(hsv);
+        if (area < 60 * 60) {
+            return getFaceRect();
+        }
+
+        float ratio = (float)area / (float)src.size().width / (float)src.size().height;
+        if (ratio > 0.15f) {
+            return getFaceRect();
+        }
+
+        Moments mu = Imgproc.moments(hsv);
+        int cx = (int)(mu.get_m10() / mu.get_m00());
+        int cy = (int)(mu.get_m01() / mu.get_m00());
+        int w = (int)(Math.sqrt(area) / 2);
+
+        Rect ret = new Rect();
+        ret.x = (int)(Math.max(0, cx - w) );
+        ret.y = (int)(Math.max(0, cy - w) );
+        ret.width = (int)(w * 2 );
+        ret.height = (int)(w * 2 );
+
+        if (ret.br().x > mWidth) {
+            ret.width = (int)mWidth - ret.x;
+        }
+        if (ret.br().y > mHeight) {
+            ret.height = (int)mHeight - ret.y;
+        }
+
+        mRect = ret;
+        mRects.clear();
+        mRects.add(ret);
+        mColor = Color.rgb(0, 0, 0);
+        mIsSuccess = true;
+
         return getFaceRect();
     }
 
