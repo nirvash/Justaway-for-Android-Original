@@ -45,6 +45,7 @@ public class FaceCrop {
     private float mWidth;
     private float mHeight;
     private Rect mRect;
+    private Mat mSkin;
     private List<Rect> mRectsOrig = new ArrayList<>();
     private List<Rect> mRects = new ArrayList<>();
     private int mColor = Color.MAGENTA;
@@ -160,6 +161,24 @@ public class FaceCrop {
         }
     }
 
+    private static BitmapWrapper drawSkinArea(BitmapWrapper image, Mat skin) {
+        if (skin == null) {
+            return image;
+        }
+        try {
+            Mat imageMat = image.createMat();
+            Mat outMat = Mat.zeros(new Size((int)image.getWidth(), (int)image.getHeight()), CvType.CV_8UC3);
+            //Core.bitwise_and(imageMat, imageMat, outMat, skin);
+//            imageMat.copyTo(outMat, skin);
+            Imgproc.cvtColor(skin, outMat, Imgproc.COLOR_GRAY2RGBA);
+            image.setMat(outMat);
+            return image;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return image;
+        }
+    }
+
     @SuppressWarnings("unused")
     private static Bitmap drawFaceRegions(List<Rect> rects, Bitmap image, int color) {
         try {
@@ -184,6 +203,7 @@ public class FaceCrop {
     public BitmapWrapper drawRegion(BitmapWrapper bitmap) {
         if (mIsSuccess) {
             if (BasicSettings.isDebug()) {
+                // bitmap = drawSkinArea(bitmap, mSkin);
                 bitmap = drawFaceRegions(mRectsOrig, bitmap, Color.YELLOW);
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
                 return bitmap;
@@ -276,7 +296,7 @@ public class FaceCrop {
                 }
             }
 
-            return getSkinRect(imageMat);
+            //return getSkinRect(imageMat);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -359,6 +379,7 @@ public class FaceCrop {
     }
 
     private Rect getSkinRect(Mat src) {
+        mSkin = null;
         Mat hsv = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(3));
         Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
         Core.inRange(hsv, new Scalar(0, 10, 60), new Scalar(40, 155, 255), hsv);
@@ -368,7 +389,7 @@ public class FaceCrop {
         }
 
         float ratio = (float)area / (float)src.size().width / (float)src.size().height;
-        if (ratio > 0.15f) {
+        if (ratio > 0.55f) {
             return getFaceRect();
         }
 
@@ -396,6 +417,7 @@ public class FaceCrop {
         mColor = Color.rgb(0, 0, 0);
         mIsSuccess = true;
 
+        mSkin = hsv;
         return getFaceRect();
     }
 
