@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
+import android.support.v4.text.TextUtilsCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -47,6 +49,7 @@ public class FaceCrop {
     private Rect mRect;
     private Mat mSkin;
     private String mTag = "";
+    private long mProcessTime = 0;
     private Paint mPaintText = new Paint();
     private List<Rect> mRectsOrig = new ArrayList<>();
     private List<Rect> mRects = new ArrayList<>();
@@ -168,18 +171,20 @@ public class FaceCrop {
 
     private void drawTag(Canvas canvas) {
         if (mRect != null) {
+            String text = String.format("%s (%dms)", mTag, mProcessTime);
+
             int x = mRect.x;
             int y = mRect.y + mRect.height;
 
             mPaintText.setStrokeWidth(10);
             mPaintText.setStyle(Paint.Style.STROKE);
             mPaintText.setColor(Color.WHITE);
-            canvas.drawText(mTag, x, y, mPaintText);
+            canvas.drawText(text, x, y, mPaintText);
 
             mPaintText.setStrokeWidth(0);
             mPaintText.setStyle(Paint.Style.FILL);
             mPaintText.setColor(Color.BLACK);
-            canvas.drawText(mTag, x, y, mPaintText);
+            canvas.drawText(text, x, y, mPaintText);
 
         }
     }
@@ -237,7 +242,7 @@ public class FaceCrop {
     }
 
     private class DetectorConf {
-        DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color, boolean flip, String tag) {
+        DetectorConf(CascadeClassifier detector, double angle, double scale, int neighbor, Size size, int color, boolean flip, boolean multi, String tag) {
             this.detector = detector;
             this.angle = angle;
             this.scale = scale;
@@ -245,6 +250,7 @@ public class FaceCrop {
             this.size = size;
             this.color = color;
             this.flip = flip;
+            this.multi = multi;
             this.tag = tag;
         }
         CascadeClassifier detector;
@@ -254,6 +260,7 @@ public class FaceCrop {
         public Size size;
         public int color;
         boolean flip;
+        boolean multi;
         String tag;
     }
 
@@ -272,13 +279,6 @@ public class FaceCrop {
         }
 
         if (!mIsFirst) {
-/*
-            if (mColor == Color.MAGENTA || mColor == Color.GREEN) {
-                mColor = Color.GREEN;
-            } else {
-                mColor = Color.CYAN;
-            }
-*/
             return getFaceRect();
         }
 
@@ -286,15 +286,21 @@ public class FaceCrop {
             return getFaceRect();
         }
 
+        long startTime = System.currentTimeMillis();
         mIsFirst = false;
+        mRect = null;
+        mRects.clear();
+        mRectsOrig.clear();
+        mIsSuccess = false;
+
         DetectorConf[] confs = new DetectorConf[] {
-                new DetectorConf(sFaceDetectorAnimeFace,   0, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, "Anime"),
-                new DetectorConf(sFaceDetectorAnimeFace,  10, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, "Anime+10"),
-                new DetectorConf(sFaceDetectorAnimeFace, -10, 1.09f, 3,  new Size(40, 40),Color.MAGENTA, false, "Anime-10"),
-                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, false, "AnimeP"),
-                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, true, "AnimeP(R)"),
-                new DetectorConf(sFaceDetectorFace,   0, 1.09f, 3,  new Size(40, 40),Color.BLUE, false, "NormalFace"),
-                new DetectorConf(sFaceDetector_Cat,   0, 1.09f, 3, new Size(40, 40), Color.BLUE, false, "Cat")
+                new DetectorConf(sFaceDetectorAnimeFace,   0, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, true, "Anime"),
+                new DetectorConf(sFaceDetectorAnimeFace,  10, 1.09f, 3, new Size(40, 40), Color.MAGENTA, false, true, "Anime+10"),
+                new DetectorConf(sFaceDetectorAnimeFace, -10, 1.09f, 3,  new Size(40, 40),Color.MAGENTA, false, true, "Anime-10"),
+                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, false, true, "AnimeP"),
+                new DetectorConf(sFaceDetectorAnimeProfileFace, 0, 1.1f, 2,  new Size(40, 40),Color.BLACK, true, true, "AnimeP(R)"),
+                new DetectorConf(sFaceDetectorFace,   0, 1.09f, 3,  new Size(40, 40),Color.BLUE, false, false, "NormalFace"),
+                new DetectorConf(sFaceDetector_Cat,   0, 1.09f, 3, new Size(40, 40), Color.BLUE, false, false, "Cat")
         };
 
         try {
@@ -313,16 +319,26 @@ public class FaceCrop {
             }
 
             for (DetectorConf conf : confs) {
+                if (!conf.multi && mIsSuccess) {
+                    break;
+                }
                 mColor = conf.color;
                 Rect ret = getFaceRectImpl(gray, conf, scale);
+                // 1回の検出に 200ms ぐらいかかるので複数の結果をマージすると常に遅くなる
                 if (mIsSuccess) {
                     return getFaceRect();
                 }
+            }
+            if (mIsSuccess) {
+                return getFaceRect();
             }
 
             //return getSkinRect(imageMat);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            long endTime = System.currentTimeMillis();
+            mProcessTime = endTime - startTime;
         }
 
         return null;
@@ -380,7 +396,6 @@ public class FaceCrop {
                 }
             }
 
-            mRectsOrig.clear();
             Collections.addAll(mRectsOrig, facesArray);
             facesArray = filterFaceRects(facesArray, mWidth, mHeight);
             facesArray = mergeFaceRects(facesArray);
@@ -388,11 +403,14 @@ public class FaceCrop {
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
                 Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
-                mRect = r;
-                mRects.clear();
+                if (mRect == null) {
+                    mRect = r;
+                }
                 Collections.addAll(mRects, facesArray);
                 mIsSuccess = true;
-                mTag = conf.tag;
+                if (TextUtils.isEmpty(mTag)) {
+                    mTag = conf.tag;
+                }
                 if (conf.angle != 0) {
                     mColor = Color.rgb(255, 153, 0);
                 }
@@ -436,8 +454,9 @@ public class FaceCrop {
             ret.height = (int)mHeight - ret.y;
         }
 
-        mRect = ret;
-        mRects.clear();
+        if (mRect != null) {
+            mRect = ret;
+        }
         mRects.add(ret);
         mColor = Color.rgb(0, 0, 0);
         mIsSuccess = true;
