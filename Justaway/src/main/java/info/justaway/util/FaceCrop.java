@@ -46,13 +46,13 @@ public class FaceCrop {
     private boolean mIsSuccess;
     private float mWidth;
     private float mHeight;
-    private Rect mRect;
+    private FaceRect mRect;
     private Mat mSkin;
     private String mTag = "";
     private long mProcessTime = 0;
     private Paint mPaintText = new Paint();
-    private List<Rect> mRectsOrig = new ArrayList<>();
-    private List<Rect> mRects = new ArrayList<>();
+    private List<FaceRect> mRectsOrig = new ArrayList<>();
+    private List<FaceRect> mRects = new ArrayList<>();
     private int mColor = Color.MAGENTA;
 
     private static CascadeClassifier sFaceDetectorAnimeFace = null;
@@ -142,13 +142,13 @@ public class FaceCrop {
         mPaintText.setTextSize(30);
     }
 
-    private BitmapWrapper drawFaceRegion(Rect rect, BitmapWrapper image, int color) {
-        List<Rect> list = new ArrayList<>();
+    private BitmapWrapper drawFaceRegion(FaceRect rect, BitmapWrapper image, int color) {
+        List<FaceRect> list = new LinkedList<>();
         list.add(rect);
         return drawFaceRegions(list, image, color);
     }
 
-    private BitmapWrapper drawFaceRegions(List<Rect> rects, BitmapWrapper image, int color) {
+    private BitmapWrapper drawFaceRegions(List<FaceRect> rects, BitmapWrapper image, int color) {
         try {
             BitmapWrapper result = new BitmapWrapper(image.getBitmap().copy(Bitmap.Config.ARGB_8888, true), true);
             Paint paint = new Paint();
@@ -157,8 +157,8 @@ public class FaceCrop {
             paint.setStyle(Paint.Style.STROKE);
 
             Canvas canvas = new Canvas(result.getBitmap());
-            for (Rect rect : rects) {
-                canvas.drawRect(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, paint);
+            for (FaceRect rect : rects) {
+                canvas.drawRect(rect.x(), rect.y(), rect.x() + rect.width(), rect.y() + rect.height(), paint);
             }
             drawTag(canvas);
             image.recycle();
@@ -173,8 +173,8 @@ public class FaceCrop {
         if (mRect != null) {
             String text = String.format("%s (%dms)", mTag, mProcessTime);
 
-            int x = mRect.x;
-            int y = mRect.y + mRect.height;
+            int x = mRect.x();
+            int y = mRect.y() + mRect.height();
 
             mPaintText.setStrokeWidth(10);
             mPaintText.setStyle(Paint.Style.STROKE);
@@ -265,15 +265,15 @@ public class FaceCrop {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public Rect getFaceRect() {
+    public FaceRect getFaceRect() {
         if (mRect == null) {
-            return new Rect();
+            return new FaceRect(new Rect());
         } else {
-            return new Rect(mRect.x, mRect.y, mRect.width, mRect.height);
+            return new FaceRect(new Rect(mRect.x(), mRect.y(), mRect.width(), mRect.height()));
         }
     }
 
-    public Rect getFaceRect(Bitmap bitmap) {
+    public FaceRect getFaceRect(Bitmap bitmap) {
         if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0) {
             return getFaceRect();
         }
@@ -323,7 +323,7 @@ public class FaceCrop {
                     break;
                 }
                 mColor = conf.color;
-                Rect ret = getFaceRectImpl(gray, conf, scale);
+                FaceRect ret = getFaceRectImpl(gray, conf, scale);
                 // 1回の検出に 200ms ぐらいかかるので複数の結果をマージすると常に遅くなる
                 if (mIsSuccess) {
                     return getFaceRect();
@@ -344,7 +344,7 @@ public class FaceCrop {
         return null;
     }
 
-    private Rect getFaceRectImpl(Mat imageMat, DetectorConf conf, double scale) {
+    private FaceRect getFaceRectImpl(Mat imageMat, DetectorConf conf, double scale) {
         if (conf.detector == null) {
             return null;
         }
@@ -367,48 +367,44 @@ public class FaceCrop {
             Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
             Log.d(TAG, String.format("rotMat: (%d, %d) : angle %s", rotMat.cols(), rotMat.rows() , conf.angle));
             conf.detector.detectMultiScale(rotMat, faces, conf.scale, conf.neighbor, 0, conf.size, new Size());
-            Rect[] facesArray = faces.toArray();
+            LinkedList<FaceRect> facesArray = FaceRect.create(faces.toArray());
 
             if (conf.angle != 0 || scale != 1.0f || conf.flip) {
                 // 回転復元
-                for (Rect r : facesArray) {
+                for (FaceRect r : facesArray) {
                     if (scale != 1.0f) {
-                        r.x /= scale;
-                        r.y /= scale;
-                        r.width /= scale;
-                        r.height /= scale;
+                        r.scale(scale);
                     }
                     if (conf.angle != 0) {
                         Point inPoint = r.tl();
-                        inPoint.x += r.width / 2;
-                        inPoint.y += r.height / 2;
-                        Log.d(TAG, String.format("face area org: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
+                        inPoint.x += r.width() / 2;
+                        inPoint.y += r.height() / 2;
+                        Log.d(TAG, String.format("face area org: (%d, %d, %d, %d) : angle %s", r.x(), r.y(), r.width(), r.height(), conf.angle));
                         Point outPoint = rotatePoint(inPoint, new Point(mWidth/2, mHeight/2), conf.angle);
-                        outPoint.x -= r.width / 2;
-                        outPoint.y -= r.height / 2;
-                        r.x = (int) outPoint.x;
-                        r.y = (int) outPoint.y;
+                        outPoint.x -= r.width() / 2;
+                        outPoint.y -= r.height() / 2;
+                        r.setTl(outPoint);
                     }
                     // 左右反転復元
                     if (conf.flip) {
-                        r.x = (int)mWidth - r.x - r.width;
+                        r.setX((int)mWidth - r.x() - r.width());
                     }
                 }
             }
 
-            if (facesArray.length > 0) {
-                Collections.addAll(mRectsOrig, facesArray);
+            if (facesArray.size() > 0) {
+                mRectsOrig.addAll(facesArray);
                 facesArray = filterFaceRects(facesArray, mWidth, mHeight);
                 facesArray = mergeFaceRects(facesArray);
             }
 
-            if (facesArray.length > 0) {
-                Rect r = getLargestFace(facesArray);
-                Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x, r.y, r.width, r.height, conf.angle));
+            if (facesArray.size() > 0) {
+                FaceRect r = getLargestFace(facesArray);
+                Log.d(TAG, String.format("face area: (%d, %d, %d, %d) : angle %s", r.x(), r.y(), r.width(), r.height(), conf.angle));
                 if (mRect == null) {
                     mRect = r;
                 }
-                Collections.addAll(mRects, facesArray);
+                mRects.addAll(facesArray);
                 mIsSuccess = true;
                 if (TextUtils.isEmpty(mTag)) {
                     mTag = conf.tag;
@@ -423,7 +419,7 @@ public class FaceCrop {
         return mRect;
     }
 
-    private Rect getSkinRect(Mat src) {
+    private FaceRect getSkinRect(Mat src) {
         mSkin = null;
         Mat hsv = new Mat((int) mHeight, (int) mWidth, CvType.CV_8U, new Scalar(3));
         Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
@@ -443,19 +439,20 @@ public class FaceCrop {
         int cy = (int)(mu.get_m01() / mu.get_m00());
         int w = (int)(Math.sqrt(area) / 2);
 
-        Rect ret = new Rect();
-        ret.x = (int)(Math.max(0, cx - w) );
-        ret.y = (int)(Math.max(0, cy - w) );
-        ret.width = (int)(w * 2 );
-        ret.height = (int)(w * 2 );
+        Rect tmp = new Rect();
+        tmp.x = (int)(Math.max(0, cx - w) );
+        tmp.y = (int)(Math.max(0, cy - w) );
+        tmp.width = (int)(w * 2 );
+        tmp.height = (int)(w * 2 );
 
-        if (ret.br().x > mWidth) {
-            ret.width = (int)mWidth - ret.x;
+        if (tmp.br().x > mWidth) {
+            tmp.width = (int)mWidth - tmp.x;
         }
-        if (ret.br().y > mHeight) {
-            ret.height = (int)mHeight - ret.y;
+        if (tmp.br().y > mHeight) {
+            tmp.height = (int)mHeight - tmp.y;
         }
 
+        FaceRect ret = new FaceRect(tmp);
         if (mRect != null) {
             mRect = ret;
         }
@@ -468,30 +465,30 @@ public class FaceCrop {
     }
 
     // 重なっている領域を合成する
-    private Rect[] mergeFaceRects(Rect[] facesArray) {
+    private LinkedList<FaceRect> mergeFaceRects(LinkedList<FaceRect> facesArray) {
         return mergeFaceRects(facesArray, 1.0f, 0.5f);
     }
         // 左右マージン付きで領域合成
-    private Rect[] mergeFaceRects(Rect[] facesArray, float marginRateX, float marginRateY) {
-        ArrayList<Rect> result = new ArrayList<>();
+    private LinkedList<FaceRect> mergeFaceRects(LinkedList<FaceRect> facesArray, float marginRateX, float marginRateY) {
+        LinkedList<FaceRect> result = new LinkedList<>();
         HashMap<Integer, Integer> map = new HashMap<>(); // 領域ごとにつけたラベル
 
-        for (int i=0; i<facesArray.length; i++) {
+        for (int i=0; i<facesArray.size(); i++) {
             map.put(i, i);
         }
 
-        for (int i=0; i<facesArray.length; i++) {
-            Rect r1 = facesArray[i];
+        for (int i=0; i<facesArray.size(); i++) {
+            FaceRect r1 = facesArray.get(i);
             android.graphics.Rect gr1 = new android.graphics.Rect((int)r1.tl().x, (int)r1.tl().y, (int)r1.br().x, (int)r1.br().y);
 
-            for (int j=i+1; j<facesArray.length; j++) {
-                Rect r2 = facesArray[j];
+            for (int j=i+1; j<facesArray.size(); j++) {
+                FaceRect r2 = facesArray.get(j);
                 android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
                 if (horizontalIntersects(gr1, gr2, marginRateX) || verticalIntersects(gr1, gr2, marginRateY)) {
                     int labelMin = Math.min(map.get(i), map.get(j));
                     int labelMax = Math.max(map.get(i), map.get(j));
                     // labelMax をすべて labelMin に書き換える
-                    for (int k=0; k<facesArray.length; k++) {
+                    for (int k=0; k<facesArray.size(); k++) {
                         if (map.get(k) == labelMax) {
                             map.put(k, labelMin);
                         }
@@ -501,12 +498,12 @@ public class FaceCrop {
         }
 
         // 同じラベルがついた領域をマージする
-        for (int i=0; i<facesArray.length; i++) {
+        for (int i=0; i<facesArray.size(); i++) {
             android.graphics.Rect gr1 = null;
-            for (int j=0; j<facesArray.length; j++) {
+            for (int j=0; j<facesArray.size(); j++) {
                 int label = map.get(j);
                 if (label == i) {
-                    Rect r2 = facesArray[j];
+                    FaceRect r2 = facesArray.get(j);
                     android.graphics.Rect gr2 = new android.graphics.Rect((int)r2.tl().x, (int)r2.tl().y, (int)r2.br().x, (int)r2.br().y);
                     if (gr1 == null) {
                         gr1 = gr2;
@@ -516,23 +513,14 @@ public class FaceCrop {
                 }
             }
             if (gr1 != null) {
-                Rect r = createRect(gr1);
+                FaceRect r = new FaceRect(gr1);
                 result.add(r);
             }
         }
 
-        return result.toArray(new Rect[0]);
+        return result;
     }
 
-    @NonNull
-    private Rect createRect(android.graphics.Rect rect) {
-        Rect tmp = new Rect();
-        tmp.x = rect.left;
-        tmp.y = rect.top;
-        tmp.width = rect.width();
-        tmp.height = rect.height();
-        return tmp;
-    }
 
     private boolean horizontalIntersects(android.graphics.Rect a, android.graphics.Rect b, float marginRate) {
         float ma = a.width() * marginRate;
@@ -548,12 +536,12 @@ public class FaceCrop {
 
         // 顔領域として不適切な位置にある領域をフィルタする
     @SuppressWarnings("UnusedParameters")
-    private Rect[] filterFaceRects(Rect[] facesArray, float width, float height) {
-        ArrayList<Rect> result = new ArrayList<>();
+    private LinkedList<FaceRect> filterFaceRects(LinkedList<FaceRect> facesArray, float width, float height) {
+        LinkedList<FaceRect> result = new LinkedList<>();
         int bottomArea = (int)(height * 0.6f);
-        for (Rect r : facesArray) {
+        for (FaceRect r : facesArray) {
             // 画面の下部にある領域は無視
-            if (r.y > bottomArea) {
+            if (r.y() > bottomArea) {
                 continue;
             }
             result.add(r);
@@ -561,19 +549,17 @@ public class FaceCrop {
 
         filterBodyRect(result);
 
-        return result.toArray(new Rect[0]);
+        return result;
 
     }
 
-    private void filterBodyRect(ArrayList<Rect> result) {
-        Rect[] facesArray;
+    private void filterBodyRect(LinkedList<FaceRect> result) {
         if (result.size() > 1) {
             // 最大の矩形の上に顔領域があるときは誤判定の可能性があるので無視
-            facesArray = result.toArray(new Rect[0]);
-            Rect large = getLargestFace(facesArray);
-            for (Rect r : facesArray) {
-                int x = r.x + r.width / 2;
-                if (r.y + r.height / 2 < large.y && x > large.x && x < large.br().x) {
+            FaceRect large = getLargestFace(result);
+            for (FaceRect r : result) {
+                int x = r.x() + r.width() / 2;
+                if (r.y() + r.height() / 2 < large.y() && x > large.x() && x < large.br().x) {
                     result.remove(large);
                     filterBodyRect(result);
                     break;
@@ -594,7 +580,7 @@ public class FaceCrop {
     // 指定したサイズで顔領域をクロップした画像を返す
     @SuppressWarnings("WeakerAccess")
     public BitmapWrapper cropFace2(BitmapWrapper image, int viewWidth, int viewHeight) {
-        Rect r = getFaceRect();
+        FaceRect r = getFaceRect();
         if (BasicSettings.isDebug()) {
             image = drawFaceRegion(r, image, Color.YELLOW);
         }
@@ -603,7 +589,7 @@ public class FaceCrop {
         if (BasicSettings.isDebug()) {
             image = drawFaceRegion(r, image, mColor);
         }
-        Bitmap cropped = Bitmap.createBitmap(image.getBitmap(), r.x, r.y, r.width, r.height);
+        Bitmap cropped = Bitmap.createBitmap(image.getBitmap(), r.x(), r.y(), r.width(), r.height());
         image.setBitmap(cropped, true);
         return image;
     }
@@ -611,34 +597,34 @@ public class FaceCrop {
 
 
     // 描画領域のアスペクト比に合わせてクロップ領域を調整
-    private static void adjustRect(Rect rect, int viewWidth, int viewHeight, int bitmapWidth, int bitmapHeight) {
+    private static void adjustRect(FaceRect rect, int viewWidth, int viewHeight, int bitmapWidth, int bitmapHeight) {
         float widgetAspect = (float)viewWidth / (float) viewHeight;
-        float rectAspect = (float)rect.width / (float)rect.height;
+        float rectAspect = (float)rect.width() / (float)rect.height();
         if (widgetAspect > rectAspect) {
-            int w = (int)(rect.height * widgetAspect);
+            int w = (int)(rect.height() * widgetAspect);
             w = Math.min(bitmapWidth, w);
-            int diff = w - rect.width;
-            if (rect.x < diff / 2) {
-                rect.x = 0;
+            int diff = w - rect.width();
+            if (rect.x() < diff / 2) {
+                rect.setX(0);
             } else {
-                rect.x -= diff / 2;
+                rect.setX(rect.x() - diff / 2);
             }
-            rect.width = w;
-            if (bitmapWidth < rect.x + rect.width) {
-                rect.width = bitmapWidth - rect.x;
+            rect.setWidth(w);
+            if (bitmapWidth < rect.x() + rect.width()) {
+                rect.setWidth(bitmapWidth - rect.x());
             }
         } else {
-            int h = (int)(rect.width / widgetAspect);
+            int h = (int)(rect.width() / widgetAspect);
             h = Math.min(bitmapHeight, h);
-            int diff = h - rect.height;
-            if (rect.y < diff / 2) {
-                rect.y = 0;
+            int diff = h - rect.height();
+            if (rect.y() < diff / 2) {
+                rect.setY(0);
             } else {
-                rect.y -= diff / 2;
+                rect.setY(rect.y() - diff / 2);
             }
-            rect.height = h;
-            if (bitmapHeight < rect.y + rect.height) {
-                rect.height = bitmapHeight - rect.y;
+            rect.setHeight(h);
+            if (bitmapHeight < rect.y() + rect.height()) {
+                rect.setHeight(bitmapHeight - rect.y());
             }
         }
     }
@@ -658,13 +644,13 @@ public class FaceCrop {
                 bitmap = drawFaceRegions(mRects, bitmap, mColor);
             }
 
-            Rect r = getFaceRect();
+            FaceRect r = getFaceRect();
             if (bitmapAspect > aspect) {
                 //r = addVPadding(r, bitmap.getBitmap(), (int) (w * aspect));
                 enlargeRect(r, bitmapWidth, bitmapHeight);
                 adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
 //                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), 0, r.y, (int) w, r.height);
-                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x, r.y, r.width, r.height);
+                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x(), r.y(), r.width(), r.height());
                 bitmap.setBitmap(cropped, true);
                 return bitmap;
             } else {
@@ -672,7 +658,7 @@ public class FaceCrop {
                 enlargeRect(r, bitmapWidth, bitmapHeight);
                 adjustRect(r, viewWidth, viewHeight, bitmapWidth, bitmapHeight);
 //                Bitmap resized = Bitmap.createBitmap(bitmap.getBitmap(), r.x, 0, r.width, (int) h);
-                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x, r.y, r.width, r.height);
+                Bitmap cropped = Bitmap.createBitmap(bitmap.getBitmap(), r.x(), r.y(), r.width(), r.height());
                 bitmap.setBitmap(cropped, true);
                 return bitmap;
             }
@@ -682,9 +668,9 @@ public class FaceCrop {
         }
     }
 
-    private void enlargeRect(Rect r, int bitmapWidth, int bitmapHeight) {
-        float xRate = r.width / (float)bitmapWidth;
-        float yRate = r.height / (float)bitmapHeight;
+    private void enlargeRect(FaceRect r, int bitmapWidth, int bitmapHeight) {
+        float xRate = r.width() / (float)bitmapWidth;
+        float yRate = r.height() / (float)bitmapHeight;
         float SCALE1 = 0.3f;
         float SCALE2 = 0.2f;
         float SCALE3 = 0.1f;
@@ -692,36 +678,36 @@ public class FaceCrop {
         float xPadding = bitmapWidth * xScale;
         float yScale = yRate < 0.2 ? SCALE1 : (yRate  < 0.4 ? SCALE2 : SCALE3);
         float yPadding = bitmapHeight * yScale;
-        r.y -= yPadding / 2;
-        r.height += yPadding;
-        if (r.y < 0) {
-            r.height += r.y;
-            r.y = 0;
+        r.setY((int)(r.y() - yPadding / 2));
+        r.setHeight((int)(r.height() + yPadding));
+        if (r.y() < 0) {
+            r.setHeight(r.height() + r.y());
+            r.setY(0);
         }
-        int bottomExcess =r.y + r.height - bitmapHeight;
+        int bottomExcess = r.y() + r.height() - bitmapHeight;
 
         if (bottomExcess > 0) {
-            r.y -= bottomExcess;
-            if (r.y < 0) {
-                r.y = 0;
+            r.setY((int)(r.y()) - bottomExcess);
+            if (r.y() < 0) {
+                r.setY(0);;
             }
-            r.height = bitmapHeight - r.y;
+            r.setHeight(bitmapHeight - r.y());
         }
 
-        r.x -= xPadding / 2;
-        r.width += xPadding;
-        if (r.x < 0) {
-            r.width += r.x;
-            r.x = 0;
+        r.setX((int)(r.x() - xPadding / 2));
+        r.setWidth((int)(r.width() + xPadding));
+        if (r.x() < 0) {
+            r.setWidth(r.width() + r.x());
+            r.setX(0);;
         }
-        int rightExcess =r.x + r.width - bitmapWidth;
+        int rightExcess =r.x() + r.width() - bitmapWidth;
 
         if (rightExcess > 0) {
-            r.x -= rightExcess;
-            if (r.x < 0) {
-                r.x = 0;
+            r.setX(r.x() - rightExcess);
+            if (r.x() < 0) {
+                r.setX(0);
             }
-            r.width = bitmapWidth - r.x;
+            r.setWidth(bitmapWidth - r.x());
         }
     }
 
@@ -764,12 +750,12 @@ public class FaceCrop {
         return r;
     }
 
-    private Rect getLargestFace(Rect[] facesArray) {
-        Rect ret = null;
+    private FaceRect getLargestFace(LinkedList<FaceRect> facesArray) {
+        FaceRect ret = null;
         int maxSize = -1;
-        for (Rect r : facesArray) {
-            double yweight = 1.0f + ((mHeight - r.y) / mHeight * 5.0f); // 上にある領域を優先
-            int size = (int)(r.width * r.height * yweight * yweight);
+        for (FaceRect r : facesArray) {
+            double yweight = 1.0f + ((mHeight - r.y()) / mHeight * 5.0f); // 上にある領域を優先
+            int size = (int)(r.width() * r.height() * yweight * yweight);
             if (size > maxSize) {
                 ret = r;
                 maxSize = size;
