@@ -396,9 +396,11 @@ public class FaceCrop {
                 }
             }
 
-            Collections.addAll(mRectsOrig, facesArray);
-            facesArray = filterFaceRects(facesArray, mWidth, mHeight);
-            facesArray = mergeFaceRects(facesArray);
+            if (facesArray.length > 0) {
+                Collections.addAll(mRectsOrig, facesArray);
+                facesArray = filterFaceRects(facesArray, mWidth, mHeight);
+                facesArray = mergeFaceRects(facesArray);
+            }
 
             if (facesArray.length > 0) {
                 Rect r = getLargestFace(facesArray);
@@ -556,7 +558,28 @@ public class FaceCrop {
             }
             result.add(r);
         }
+
+        filterBodyRect(result);
+
         return result.toArray(new Rect[0]);
+
+    }
+
+    private void filterBodyRect(ArrayList<Rect> result) {
+        Rect[] facesArray;
+        if (result.size() > 1) {
+            // 最大の矩形の上に顔領域があるときは誤判定の可能性があるので無視
+            facesArray = result.toArray(new Rect[0]);
+            Rect large = getLargestFace(facesArray);
+            for (Rect r : facesArray) {
+                int x = r.x + r.width / 2;
+                if (r.y + r.height / 2 < large.y && x > large.x && x < large.br().x) {
+                    result.remove(large);
+                    filterBodyRect(result);
+                    break;
+                }
+            }
+        }
     }
 
     private Point rotatePoint(Point point, Point center, double angle) {
