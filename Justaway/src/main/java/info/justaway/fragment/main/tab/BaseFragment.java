@@ -174,7 +174,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
     private Runnable mRender = new Runnable() {
         @Override
         public void run() {
-            Log.d(TAG, "mRender: run");
+            // Log.d(TAG, "mRender: run");
 
             if (mScrolling) {
                 return;
@@ -194,7 +194,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
             int count = 0;
             boolean highlight = false;
             for (Row row : mStackRows) {
-                Log.d(TAG, "insert: " + row.getStatus().getId());
+                // Log.d(TAG, "insert: " + row.getStatus().getId());
                 mAdapter.insert(row, 0);
                 count++;
                 if (row.isFavorite()) {
@@ -360,7 +360,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
 
     @SuppressWarnings("UnusedDeclaration")
     public void onEventMainThread(StatusActionEvent event) {
-        Log.d(TAG, "onEvent: StatusActionEvent");
+        // Log.d(TAG, "onEvent: StatusActionEvent");
         mAdapter.notifyDataSetChanged();
     }
 
@@ -370,7 +370,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
      * @param event ツイート
      */
     public void onEventMainThread(StreamingDestroyStatusEvent event) {
-        Log.d(TAG, "onEvent: DestroyStatus");
+        // Log.d(TAG, "onEvent: DestroyStatus");
         Iterator<Row> itr = mStackRows.iterator();
         while (itr.hasNext()) {
             Row row = itr.next();
@@ -403,7 +403,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
      * @param event ツイート
      */
     public void onEventMainThread(StreamingCreateStatusEvent event) {
-        Log.d(TAG, "onEvent: CreateStatus: " + event.getRow().getStatus().getId());
+        // Log.d(TAG, "onEvent: CreateStatus: " + event.getRow().getStatus().getId());
         addStack(event.getRow());
     }
 
@@ -426,7 +426,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
      * @param event ふぁぼイベント
      */
     public void onEventMainThread(StreamingUpdateSelfFavoriteEvent event) {
-        Log.d(TAG, "onEvent: SelfFavorite");
+        // Log.d(TAG, "onEvent: SelfFavorite");
         try {
             for (Row row : mStackRows) {
                 if (row.isRetweeted() && row.getStatus().getRetweetedStatus().getId() == event.getId()) {
@@ -449,7 +449,7 @@ public abstract class BaseFragment extends Fragment implements OnRefreshListener
      * @param event イベント
      */
     public void onEventMainThread(StreamingUpdateSelfRetweetEvent event) {
-        Log.d(TAG, "onEvent: SelfRetweet");
+        // Log.d(TAG, "onEvent: SelfRetweet");
         try {
             mAdapter.updateRetweet(event.getId(), event.getRtId(), event.isRetweeted());
         } catch (Exception e) {

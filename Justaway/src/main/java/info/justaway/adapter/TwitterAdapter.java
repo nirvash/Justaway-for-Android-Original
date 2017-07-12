@@ -427,7 +427,7 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             }
 
 
-            Log.d(TAG, String.format("renderStatus: %s, %d", status.getId(), position ));
+            // Log.d(TAG, String.format("renderStatus: %s, %d", status.getId(), position ));
 
             Status retweet = status.getRetweetedStatus();
             if (row.isFavorite()) {

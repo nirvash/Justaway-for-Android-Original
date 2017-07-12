@@ -364,8 +364,7 @@ public class FaceCrop {
             }
 
 
-            Log.d(TAG, String.format("image: (%s, %s)", mWidth, mHeight));
-            Log.d(TAG, String.format("rotMat: (%d, %d) : angle %s", rotMat.cols(), rotMat.rows() , conf.angle));
+            Log.d(TAG, String.format("image: (%s, %s), rotMat: (%d, %d) : angle %s", mWidth, mHeight, rotMat.cols(), rotMat.rows() , conf.angle));
             conf.detector.detectMultiScale(rotMat, faces, conf.scale, conf.neighbor, 0, conf.size, new Size());
             LinkedList<FaceRect> facesArray = FaceRect.create(faces.toArray());
 
