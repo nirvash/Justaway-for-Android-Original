@@ -1,5 +1,8 @@
 <resources>
     <string name="title_activity_settings">設定</string>
+    <string name="pref_title_is_debug">デバッグモード</string>
+    <string name="pref_title_enable_facedetection">顔認識 有効化</string>
+    <string name="pref_title_enable_simple_layout">シンプルレイアウト</string>
 
     <string name="pref_title_display_account_name">ツールバーのアカウント名</string>
     <string-array name="pref_display_account_name_titles">

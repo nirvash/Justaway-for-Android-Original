@@ -261,8 +261,6 @@
     <string name="title_filter">Filter</string>
     <string name="menu_rate_limit">API Limit</string>
     <string name="title_reactions">Reactions</string>
-    <string name="pref_title_is_debug">Debug mode</string>
-    <string name="pref_title_enable_facedetection">Enable Face detection</string>
     <string name="crash_toast_text">crashed</string>
     <string name="crash_dialog_text">send crash log</string>
     <string name="crash_dialog_title">Application crashed</string>

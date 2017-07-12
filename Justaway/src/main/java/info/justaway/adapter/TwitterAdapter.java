@@ -488,7 +488,12 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         holder.mRetweetContainer.setVisibility(View.GONE);
         holder.mImagesContainer.setVisibility(View.GONE);
         holder.mImagesContainerWrapper.setVisibility(View.GONE);
-        UserIconManager.displayUserIcon(message.getSender(), holder.mIcon);
+        if (BasicSettings.enableSimpleLayout()) {
+            holder.mIcon.setImageBitmap(null);
+            holder.mIcon.setVisibility(View.INVISIBLE);
+        } else {
+            UserIconManager.displayUserIcon(message.getSender(), holder.mIcon);
+        }
         holder.mIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -664,7 +669,13 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         } else {
             holder.mLock.setVisibility(View.INVISIBLE);
         }
-        UserIconManager.displayUserIcon(status.getUser(), holder.mIcon);
+
+        if (BasicSettings.enableSimpleLayout()) {
+            holder.mIcon.setImageBitmap(null);
+            holder.mIcon.setVisibility(View.INVISIBLE);
+        } else {
+            UserIconManager.displayUserIcon(status.getUser(), holder.mIcon);
+        }
         holder.mIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -703,6 +714,11 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
             // プレビュー表示On
             if (BasicSettings.getDisplayThumbnailOn()) {
                 ImageUtil.displayThumbnailImages(mContext, holder.mQuotedImagesContainer, holder.mImagesContainerWrapper, holder.mQuotedPlay, quotedStatus);
+                if (BasicSettings.enableSimpleLayout()) {
+                    holder.mQuotedImagesContainer.setAlpha(0.5f);
+                } else {
+                    holder.mQuotedImagesContainer.setAlpha(1.0f);
+                }
             } else {
                 ImageUtil.hideImageContainer(holder.mQuotedImagesContainer, holder.mQuotedImagesContainerWrapper);
             }
@@ -714,6 +730,11 @@ public class TwitterAdapter extends ArrayAdapter<Row> {
         // プレビュー表示On
         if (BasicSettings.getDisplayThumbnailOn()) {
             ImageUtil.displayThumbnailImages(mContext, holder.mImagesContainer, holder.mImagesContainerWrapper, holder.mPlay, status);
+            if (BasicSettings.enableSimpleLayout()) {
+                holder.mImagesContainer.setAlpha(0.5f);
+            } else {
+                holder.mImagesContainer.setAlpha(1.0f);
+            }
         } else {
             ImageUtil.hideImageContainer(holder.mImagesContainer, holder.mImagesContainerWrapper);
         }

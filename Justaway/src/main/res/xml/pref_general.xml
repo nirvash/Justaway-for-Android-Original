@@ -9,6 +9,12 @@
         android:title="@string/pref_title_enable_facedetection"
         android:defaultValue="true"/>
 
+    <CheckBoxPreference
+        android:key="enable_simple_layout"
+        android:title="@string/pref_title_enable_simple_layout"
+        android:defaultValue="true"/>
+
+
     <ListPreference
         android:key="display_account_name"
         android:title="@string/pref_title_display_account_name"
