@@ -4,17 +4,22 @@ import android.app.Application;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.StrictMode;
+import android.util.Log;
 
 import com.deploygate.sdk.DeployGate;
 
 import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 
 import info.justaway.model.Relationship;
 import info.justaway.model.UserIconManager;
 import info.justaway.settings.BasicSettings;
 import info.justaway.settings.MuteSettings;
+import info.justaway.util.FaceCrop;
 import info.justaway.util.ImageUtil;
 
 @ReportsCrashes(
@@ -28,6 +33,24 @@ import info.justaway.util.ImageUtil;
 )
 
 public class JustawayApplication extends Application {
+
+    private static final String TAG = JustawayApplication.class.getSimpleName();
+
+    private BaseLoaderCallback mOpenCVLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            super.onManagerConnected(status);
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                    Log.i(TAG, "OpenCV initialized");
+                    FaceCrop.initFaceDetector(getApplicationContext());
+                    break;
+                default:
+                    super.onManagerConnected(status);
+                    break;
+            }
+        }
+    };
 
     private static JustawayApplication sApplication;
     private static Typeface sFontello;
@@ -62,6 +85,7 @@ public class JustawayApplication extends Application {
         Relationship.init();
 
         sFontello = Typeface.createFromAsset(getAssets(), "fontello.ttf");
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mOpenCVLoaderCallback);
 
         // 例外発生時の処理を指定（スタックトレースを保存）
         if (BuildConfig.DEBUG) {

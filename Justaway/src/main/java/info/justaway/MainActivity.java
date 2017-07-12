@@ -106,20 +106,7 @@ public class MainActivity extends FragmentActivity {
     private ViewPager mViewPager;
     private Status mInReplyToStatus;
 
-    private BaseLoaderCallback mOpenCVLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            super.onManagerConnected(status);
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                    FaceCrop.initFaceDetector(MainActivity.this);
-                    break;
-                default:
-                    super.onManagerConnected(status);
-                    break;
-            }
-        }
-    };
+
 
     @SuppressWarnings("deprecation")
     private android.support.v4.app.ActionBarDrawerToggle mDrawerToggle;
@@ -327,7 +314,6 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mOpenCVLoaderCallback);
         EventBus.getDefault().register(this);
     }
 
