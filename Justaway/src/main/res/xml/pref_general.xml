@@ -12,7 +12,7 @@
     <CheckBoxPreference
         android:key="enable_simple_layout"
         android:title="@string/pref_title_enable_simple_layout"
-        android:defaultValue="true"/>
+        android:defaultValue="false"/>
 
 
     <ListPreference
