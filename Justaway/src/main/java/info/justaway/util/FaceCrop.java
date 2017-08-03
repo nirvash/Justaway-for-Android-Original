@@ -274,7 +274,7 @@ public class FaceCrop {
     }
 
     public FaceRect getFaceRect(Bitmap bitmap) {
-        if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0) {
+        if (bitmap == null || bitmap.getWidth() * bitmap.getHeight() == 0 || bitmap.isRecycled()) {
             return getFaceRect();
         }
 
